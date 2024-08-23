@@ -1,11 +1,10 @@
+"""This module contains the base class for all ProtMyth models.
+"""
 # Copyright (c) 2024 Helixon Limited.
 #
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
-"""
-This module contains the base class for all ProtMyth models.
-"""
 
 import abc
 from typing import Generic, TypeVar, Literal, Any, overload
@@ -13,30 +12,26 @@ from typing import Generic, TypeVar, Literal, Any, overload
 import lightning as L
 
 
-_InputType = TypeVar("_InputType")
-_ResultType = TypeVar("_ResultType")
-_LossType = TypeVar("_LossType")
+_InputT = TypeVar("_InputT")
+_ResultT = TypeVar("_ResultT")
+_LossT = TypeVar("_LossT")
 
 
-class BaseModel(L.LightningModule, Generic[_InputType, _ResultType, _LossType], metaclass=abc.ABCMeta):
+class BaseModel(L.LightningModule, Generic[_InputT, _ResultT, _LossT], metaclass=abc.ABCMeta):
+    """Base class for all ProtMyth models.
     """
-    Base class for all ProtMyth models.
-    """
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
 
     @overload
-    def __call__(self, batch: _InputType, get_loss: Literal[False], *args: Any, **kwargs: Any) -> _ResultType:
+    def __call__(self, batch: _InputT, get_loss: Literal[False], *args: Any, **kwargs: Any) -> _ResultT:
         ...
 
     @overload
     def __call__(
-        self, batch: _InputType, get_loss: Literal[True], *args: Any, **kwargs: Any
-    ) -> tuple[_ResultType, _LossType]:
+        self, batch: _InputT, get_loss: Literal[True], *args: Any, **kwargs: Any
+    ) -> tuple[_ResultT, _LossT]:
         ...
 
     def __call__(
-        self, batch: _InputType, get_loss: Literal[False, True], *args: Any, **kwargs: Any
-    ) -> _ResultType | tuple[_ResultType, _LossType]:
+        self, batch: _InputT, get_loss: Literal[False, True], *args: Any, **kwargs: Any
+    ) -> _ResultT | tuple[_ResultT, _LossT]:
         return super().__call__(batch, get_loss, **kwargs)
