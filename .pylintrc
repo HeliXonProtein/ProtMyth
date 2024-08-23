@@ -8,7 +8,10 @@
 
 [MASTER]
 # Check docstring completeness
-load-plugins = pylint.extensions.docparams, pylint.extensions.docstyle
+load-plugins = 
+    pylint.extensions.docparams,
+    pylint.extensions.docstyle,
+    pylint_junit
 
 [MESSAGES CONTROL]
 enable = all
@@ -40,3 +43,6 @@ accept-no-raise-doc=no
 accept-no-return-doc=no
 accept-no-yields-doc=no
 default-docstring-type=numpy
+
+[REPORTS]
+output-format=junit
