@@ -1,9 +1,7 @@
-// Copyright (c) 2023 Helixon Limited - All Rights Reserved
+// Copyright (c) 2024 Helixon Limited.
 //
-// This file is a part of FoldY
-//
-// Unauthorized copying of this file, via any medium is strictly prohibited
-// Proprietary and confidential
+// This file is a part of ProtMyth and is released under the MIT License.
+// Thanks for using ProtMyth!
 
 #include <algorithm>
 #include <cmath>

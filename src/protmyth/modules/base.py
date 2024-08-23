@@ -11,10 +11,11 @@ import abc
 from typing import Generic, TypeVar, Any
 
 import graphviz
+import jaxtyping
 from torch import nn
 
 
-_ForwardReturnType = TypeVar("_ForwardReturnType")
+_ForwardReturnType = TypeVar("_ForwardReturnType", bound=jaxtyping.AbstractArray)
 
 
 class BaseModule(nn.Module, Generic[_ForwardReturnType]):
