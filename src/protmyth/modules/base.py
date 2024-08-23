@@ -11,11 +11,13 @@ import abc
 from typing import Generic, TypeVar, Any
 
 import graphviz
-import jaxtyping
+# import jaxtyping
 from torch import nn
 
 
-_ForwardReturnType = TypeVar("_ForwardReturnType", bound=jaxtyping.AbstractArray)
+# NOTE: jaxtyping dtype[array, shape] will be treated as array itself in mypy check
+# _ForwardReturnType = TypeVar("_ForwardReturnType", bound=jaxtyping.AbstractArray)
+_ForwardReturnType = TypeVar("_ForwardReturnType")
 
 
 class BaseModule(nn.Module, Generic[_ForwardReturnType]):
