@@ -1,0 +1,9 @@
+# Copyright (c) 2024 Helixon Limited.
+#
+# This file is a part of ProtMyth and is released under the MIT License.
+# Thanks for using ProtMyth!
+#
+# You should always use Numpy style Parameters part of docstring
+# for functions and classes. https://sphinxcontrib-napoleon.readthedocs.io/en/latest/
+
+load-plugins=pylint.extensions.check_docs
