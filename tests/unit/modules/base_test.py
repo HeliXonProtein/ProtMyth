@@ -17,7 +17,10 @@ from jaxtyping import Float
 from protmyth.modules.base import BaseModule
 
 
-class ConcreteModule(BaseModule[Float[torch.Tensor, "..."]]):
+_ForwardReturnType = Float[torch.Tensor, "..."]
+
+
+class ConcreteModule(BaseModule[_ForwardReturnType]):
     """
     Helper class for testing the BaseModule class.
 
