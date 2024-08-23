@@ -1,0 +1,11 @@
+class: Extension
+sources:
+- magic_loader_clib.cpp
+options:
+  language: c++
+  extra_compile_args:
+  - -shared
+  - -fPIC
+  - -O3
+  - -std=c++17
+  - -fopenmp
