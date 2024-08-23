@@ -23,7 +23,7 @@ pipeline {
                 }
                 echo 'Mypy static check...'
                 catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
-                    sh 'timeout -s SIGKILL 600s mypy -p src -p tests > reports/mypy.log'
+                    sh 'timeout -s SIGKILL 600s mypy src tests > reports/mypy.log'
                 }
                 echo 'Header check...'
                 catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
