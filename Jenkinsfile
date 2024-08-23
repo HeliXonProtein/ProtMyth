@@ -56,9 +56,8 @@ pipeline {
             }
             post {
                 always {
-                    recordIssues(
-                        qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]],
-                        tools: [pylint(pattern: 'reports/pylint.log')]
+                    junit(
+                        testResults: 'reports/pylint.log'
                     )
                 }
             }
