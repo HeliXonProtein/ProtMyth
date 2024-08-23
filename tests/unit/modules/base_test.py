@@ -3,8 +3,7 @@
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
-"""
-Unit tests for the BaseModule class.
+"""Unit tests for the BaseModule class.
 """
 
 from unittest import TestCase
@@ -21,8 +20,7 @@ _ForwardReturnType = Float[torch.Tensor, "..."]
 
 
 class ConcreteModule(BaseModule[_ForwardReturnType]):
-    """
-    Helper class for testing the BaseModule class.
+    """Helper class for testing the BaseModule class.
 
     Args:
         BaseModule (torch.Tensor): ...
@@ -33,21 +31,18 @@ class ConcreteModule(BaseModule[_ForwardReturnType]):
 
 
 class TestBaseModule(TestCase):
-    """
-    Test suite for the BaseModule class.
+    """Test suite for the BaseModule class.
     """
 
     def test_init(self):
-        """
-        Test the __init__ method.
+        """Test the __init__ method.
         """
         module = ConcreteModule()
         self.assertIsInstance(module, BaseModule)
 
     @patch("protmyth.modules.base.Digraph")
     def test_make_graph(self, mock_digraph):
-        """
-        Test the make_graph method.
+        """Test the make_graph method.
         """
         module = ConcreteModule()
         module.make_graph()

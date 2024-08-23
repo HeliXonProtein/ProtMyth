@@ -1,9 +1,10 @@
-"""This module contains the base class for all ProtMyth models.
-"""
 # Copyright (c) 2024 Helixon Limited.
 #
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
+
+"""This module contains the base class for all ProtMyth models.
+"""
 
 
 import abc
