@@ -10,7 +10,7 @@
 import abc
 from typing import Generic, TypeVar, Any
 
-import graphviz
+from graphviz import Digraph
 # import jaxtyping
 from torch import nn
 
@@ -46,7 +46,7 @@ class BaseModule(nn.Module, Generic[_ModuleReturnT]):
         return super().__call__(*args, **kwds)
 
     @abc.abstractmethod
-    def make_graph(self, *args, **kwargs) -> graphviz.Digraph:
+    def make_graph(self, *args, **kwargs) -> Digraph:
         """Generate a graphviz Digraph object representing the module's computation graph.
 
         Args:

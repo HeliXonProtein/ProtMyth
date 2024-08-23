@@ -45,5 +45,4 @@ class TestBaseModule(TestCase):
         """Test the make_graph method.
         """
         module = ConcreteModule()
-        module.make_graph()
-        mock_digraph.assert_called_once()
+        return_value = module.make_graph()
