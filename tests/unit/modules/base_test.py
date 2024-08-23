@@ -45,4 +45,4 @@ class TestBaseModule(TestCase):
         """Test the make_graph method.
         """
         module = ConcreteModule()
-        return_value = module.make_graph()
+        module.make_graph()
