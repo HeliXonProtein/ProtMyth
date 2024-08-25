@@ -2,8 +2,3 @@
 #
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
-
-[flake8]
-ignore = E123, E203, E266, E741, F406, F772
-max-line-length = 120
-max-complexity = 10
