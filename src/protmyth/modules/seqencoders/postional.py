@@ -18,7 +18,7 @@ from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 
 
-@register_module("positional")
+@register_module("seqencoders")
 class RotatedPostionalEncoder(BaseModule[jaxtyping.Array[torch.Tensor, "..."]]):
     r"""Rotated Positional Encoding (RoPE) for Transformers
     This is a PyTorch implementation of the RoPE layer described in
