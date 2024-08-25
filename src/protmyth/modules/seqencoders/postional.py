@@ -11,6 +11,8 @@ from collections.abc import Sequence
 import einops
 import torch
 import jaxtyping
+import torchviz
+from graphviz import Digraph
 
 from protmyth.modules.base import BaseModule
 
@@ -144,15 +146,15 @@ class RotatedPostionalEncoder(BaseModule[jaxtyping.Array[torch.Tensor, "..."]]):
             torch.Tensor: The rotated input tensor of shape (..., N, H, C).
         """
         if scale is None and bias is None:
-            return (x * cos) + (self.rotate_half(x) * sin)
+            return (x * cos) + (self.trunk_half(x) * sin)
         elif scale is not None and bias is None:
             scale = einops.repeat(scale, "... N -> ... N 1 1")
-            return ((x * cos) + (self.rotate_half(x) * sin)) * scale
+            return ((x * cos) + (self.trunk_half(x) * sin)) * scale
         elif scale is None and bias is not None:
-            return (x * cos) + (self.rotate_half(x) * sin) + bias
+            return (x * cos) + (self.trunk_half(x) * sin) + bias
         else:
             scale = einops.repeat(scale, "... N -> ... N 1 1")
-            return ((x * cos) + (self.rotate_half(x) * sin)) * scale + bias
+            return ((x * cos) + (self.trunk_half(x) * sin)) * scale + bias
 
     def forward(
         self,
@@ -183,3 +185,20 @@ class RotatedPostionalEncoder(BaseModule[jaxtyping.Array[torch.Tensor, "..."]]):
 
         # Apply rotation
         return self.apply_rotary_pos_emb(input_x, sin, cos, scale, bias)
+
+    def make_graph(
+        self,
+        input_x: jaxtyping.Array[torch.Tensor, "... N H C"],
+    ) -> Digraph:
+        """Make a graph of the RoPE layer.
+
+        Args:
+            input_x (torch.Tensor): The peudo input tensor of shape (..., N, H, C).
+
+        Returns:
+            Digraph: The graph of the RoPE layer.
+        """
+        rand_x = torch.randn_like(input_x)
+        positions = torch.arange(input_x.shape[-3])[..., None]
+        y = self.forward(rand_x, positions)
+        return torchviz.make_dot(y.mean(), params=dict(self.named_parameters()))
