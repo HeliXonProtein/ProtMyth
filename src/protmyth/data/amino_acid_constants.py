@@ -10,6 +10,8 @@ import torch
 
 from protmyth.data.types import ProteinSequenceDomain
 
+
+# This is the standard residue order when coding AA type as a number.
 STANDARD_AMINO_ACIDS_20 = [
     "A",
     "R",
@@ -33,6 +35,32 @@ STANDARD_AMINO_ACIDS_20 = [
     "V",
 ]
 
+STANDARD_AMINO_ACIDS_22 = [
+    "A",
+    "R",
+    "N",
+    "D",
+    "C",
+    "Q",
+    "E",
+    "G",
+    "H",
+    "I",
+    "L",
+    "K",
+    "M",
+    "F",
+    "P",
+    "S",
+    "T",
+    "W",
+    "Y",
+    "V",
+    "O",  # L-Pyrrolysine
+    "U",  # L-Selenocysteine
+]
+
+
 STANDARD_AA_1to3 = {
     "A": "ALA",
     "R": "ARG",
@@ -54,8 +82,13 @@ STANDARD_AA_1to3 = {
     "W": "TRP",
     "Y": "TYR",
     "V": "VAL",
+    "O": "PYL",
+    "U": "SEC",
     "X": "UNK",
 }
+
+STANDARD_AA_3to1 = {v: k for k, v in STANDARD_AA_1to3.items()}
+
 
 NON_STANDARD_SUBSTITUTIONS = {
     "2AS": "ASP",
@@ -206,7 +239,9 @@ NON_STANDARD_SUBSTITUTIONS = {
 STD_AA_Domain = ProteinSequenceDomain(
     alphabet=STANDARD_AMINO_ACIDS_20,
     mapping={
+        # pylint: disable=E1102
         aa: torch.nn.functional.one_hot(torch.arange(20), num_classes=20).float()
+        # pylint: enable=E1102
         for aa in STANDARD_AMINO_ACIDS_20
     }
 )
@@ -214,7 +249,29 @@ STD_AA_Domain = ProteinSequenceDomain(
 STD_AA_WITHUNK_Domain = ProteinSequenceDomain(
     alphabet=STANDARD_AMINO_ACIDS_20 + ['X'],
     mapping={
+        # pylint: disable=E1102
         aa: torch.nn.functional.one_hot(torch.arange(21), num_classes=21).float()
+        # pylint: enable=E1102
         for aa in STANDARD_AMINO_ACIDS_20 + ['X']
+    }
+)
+
+STD_AA_WITHSPECIAL_Domain = ProteinSequenceDomain(
+    alphabet=STANDARD_AMINO_ACIDS_22,
+    mapping={
+        # pylint: disable=E1102
+        aa: torch.nn.functional.one_hot(torch.arange(22), num_classes=22).float()
+        # pylint: enable=E1102
+        for aa in STANDARD_AMINO_ACIDS_22
+    }
+)
+
+STD_AA_WITHUNK_SPECIAL_Domain = ProteinSequenceDomain(
+    alphabet=STANDARD_AMINO_ACIDS_22 + ['X'],
+    mapping={
+        # pylint: disable=E1102
+        aa: torch.nn.functional.one_hot(torch.arange(23), num_classes=23).float()
+        # pylint: enable=E1102
+        for aa in STANDARD_AMINO_ACIDS_22 + ['X']
     }
 )

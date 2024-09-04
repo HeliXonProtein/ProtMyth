@@ -17,12 +17,12 @@ class ProteinSequence(TypedDict):
 
     Parameters
     ----------
-    seq : torch.Tensor
-        The protein sequence represented as a tensor.
+    seq : str
+        The protein sequence.
     seq_len : int
         The length of the protein sequence.
     """
-    seq: torch.Tensor
+    seq: str
     seq_len: int
 
 

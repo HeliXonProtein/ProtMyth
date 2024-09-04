@@ -8,15 +8,16 @@
 
 import abc
 import dataclasses
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Any
 
 
 _RawT = TypeVar("_RawT")
 _LabelT = TypeVar("_LabelT")
+_DomainT = TypeVar("_DomainT")
 
 
 @dataclasses.dataclass
-class BaseHolder(Generic[_RawT, _LabelT], metadata=abc.ABCMeta):
+class BaseHolder(Generic[_RawT, _LabelT], metaclass=abc.ABCMeta):
     """Base class for all data holder
 
     This class serves as a foundation for all data holders in the system.
@@ -31,14 +32,17 @@ class BaseHolder(Generic[_RawT, _LabelT], metadata=abc.ABCMeta):
         Type variable for label data.
     """
 
+    @classmethod
     @abc.abstractmethod
-    def read_raw(self, *args, **kwargs) -> _RawT:
+    def read_raw(cls, input_x: Any, domain: _DomainT, **kwargs) -> _RawT:
         """Transform a python object read from database into raw datatype.
 
         Parameters
         ----------
-        *args
-            Variable length argument list.
+        input_x : Any
+            Input object.
+        domain : _DomainT
+            Domain type predefined.
         **kwargs
             Arbitrary keyword arguments.
 
@@ -54,16 +58,17 @@ class BaseHolder(Generic[_RawT, _LabelT], metadata=abc.ABCMeta):
         """
         raise NotImplementedError("read_raw method not implemented")
 
+    @classmethod
     @abc.abstractmethod
-    def transform_raw_to_label(self, raw: _RawT, *args, **kwargs) -> _LabelT:
-        """Transform raw data to label data.
+    def transform_raw_to_data(cls, raw: _RawT, domain: _DomainT, **kwargs) -> _LabelT:
+        """Transform raw data to training data.
 
         Parameters
         ----------
         raw : _RawT
             Raw data type predefined.
-        *args
-            Variable length argument list.
+        domain : _DomainT
+            Domain type predefined.
         **kwargs
             Arbitrary keyword arguments.
 
@@ -79,16 +84,15 @@ class BaseHolder(Generic[_RawT, _LabelT], metadata=abc.ABCMeta):
         """
         raise NotImplementedError("transform_raw_to_label method not implemented")
 
+    @classmethod
     @abc.abstractmethod
-    def read_raw_from_file(self, file_path: str, *args, **kwargs) -> _RawT:
-        """Read raw data from a file.
+    def yield_raw_from_file(cls, file_path: str, **kwargs) -> _RawT:
+        """Yield raw data from a file.
 
         Parameters
         ----------
         file_path : str
             Path to the file containing raw data.
-        *args
-            Additional positional arguments.
         **kwargs
             Additional keyword arguments.
 
