@@ -239,39 +239,42 @@ NON_STANDARD_SUBSTITUTIONS = {
 STD_AA_Domain = ProteinSequenceDomain(
     alphabet=STANDARD_AMINO_ACIDS_20,
     mapping={
-        # pylint: disable=E1102
-        aa: torch.nn.functional.one_hot(torch.arange(20), num_classes=20).float()
-        # pylint: enable=E1102
-        for aa in STANDARD_AMINO_ACIDS_20
+        aa: torch.nn.functional.one_hot(idx, num_classes=20).float()
+        for idx, aa in zip(torch.arange(20), STANDARD_AMINO_ACIDS_20)
     }
 )
 
 STD_AA_WITHUNK_Domain = ProteinSequenceDomain(
     alphabet=STANDARD_AMINO_ACIDS_20 + ['X'],
     mapping={
-        # pylint: disable=E1102
-        aa: torch.nn.functional.one_hot(torch.arange(21), num_classes=21).float()
-        # pylint: enable=E1102
-        for aa in STANDARD_AMINO_ACIDS_20 + ['X']
+        aa: torch.nn.functional.one_hot(idx, num_classes=21).float()
+        for idx, aa in zip(torch.arange(21), STANDARD_AMINO_ACIDS_20 + ['X'])
     }
 )
 
 STD_AA_WITHSPECIAL_Domain = ProteinSequenceDomain(
     alphabet=STANDARD_AMINO_ACIDS_22,
     mapping={
-        # pylint: disable=E1102
-        aa: torch.nn.functional.one_hot(torch.arange(22), num_classes=22).float()
-        # pylint: enable=E1102
-        for aa in STANDARD_AMINO_ACIDS_22
+        aa: torch.nn.functional.one_hot(idx, num_classes=22).float()
+        for idx, aa in zip(torch.arange(22), STANDARD_AMINO_ACIDS_22)
     }
 )
 
 STD_AA_WITHUNK_SPECIAL_Domain = ProteinSequenceDomain(
     alphabet=STANDARD_AMINO_ACIDS_22 + ['X'],
     mapping={
-        # pylint: disable=E1102
-        aa: torch.nn.functional.one_hot(torch.arange(23), num_classes=23).float()
-        # pylint: enable=E1102
-        for aa in STANDARD_AMINO_ACIDS_22 + ['X']
+        aa: torch.nn.functional.one_hot(idx, num_classes=23).float()
+        for idx, aa in zip(torch.arange(23), STANDARD_AMINO_ACIDS_22 + ['X'])
     }
+)
+
+STD_AA_SOTFLABEL_Domain = ProteinSequenceDomain(
+    alphabet=STANDARD_AMINO_ACIDS_20 + ['X'],
+    mapping=dict(
+        {
+            aa: torch.nn.functional.one_hot(idx, num_classes=20).float()
+            for idx, aa in zip(torch.arange(20), STANDARD_AMINO_ACIDS_20)
+        },
+        **{'X': torch.full((20,), 1 / 20)}
+    )
 )

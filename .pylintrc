@@ -12,6 +12,8 @@ load-plugins =
     pylint.extensions.docparams,
     pylint.extensions.docstyle,
     pylint_junit
+# Ignore all typechecks and leave it for mypy
+disable = typecheck
 
 [MESSAGES CONTROL]
 enable = all
@@ -46,7 +48,3 @@ default-docstring-type=numpy
 
 [REPORTS]
 output-format=junit
-
-[TYPECHECK]
-# Disable type checking for pytorch and numpy
-generated-members=torch.*,numpy.*

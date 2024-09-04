@@ -9,6 +9,7 @@
 import abc
 import dataclasses
 from typing import Generic, TypeVar, Any
+from collections.abc import Iterable
 
 
 _RawT = TypeVar("_RawT")
@@ -17,7 +18,7 @@ _DomainT = TypeVar("_DomainT")
 
 
 @dataclasses.dataclass
-class BaseHolder(Generic[_RawT, _LabelT], metaclass=abc.ABCMeta):
+class BaseHolder(Generic[_RawT, _LabelT, _DomainT], metaclass=abc.ABCMeta):
     """Base class for all data holder
 
     This class serves as a foundation for all data holders in the system.
@@ -30,12 +31,14 @@ class BaseHolder(Generic[_RawT, _LabelT], metaclass=abc.ABCMeta):
         Type variable for raw data.
     _LabelT : TypeVar
         Type variable for label data.
+    _DomainT : TypeVar
+        Type variable for domain data.
     """
 
     @classmethod
     @abc.abstractmethod
-    def read_raw(cls, input_x: Any, domain: _DomainT, **kwargs) -> _RawT:
-        """Transform a python object read from database into raw datatype.
+    def read_postgres_raw(cls, input_x: Any, domain: _DomainT, **kwargs) -> _RawT:
+        """Transform a python object read from postgresql database into raw datatype.
 
         Parameters
         ----------
@@ -60,13 +63,14 @@ class BaseHolder(Generic[_RawT, _LabelT], metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def transform_raw_to_data(cls, raw: _RawT, domain: _DomainT, **kwargs) -> _LabelT:
+    def transform_raw_to_data(cls, raw: _RawT | list[_RawT], domain: _DomainT, **kwargs) -> _LabelT:
         """Transform raw data to training data.
 
         Parameters
         ----------
-        raw : _RawT
-            Raw data type predefined.
+        raw : _RawT | list[_RawT]
+            Raw data type predefined. If a list is provided, it will be transformed
+            into a single data point.
         domain : _DomainT
             Domain type predefined.
         **kwargs
@@ -86,7 +90,7 @@ class BaseHolder(Generic[_RawT, _LabelT], metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def yield_raw_from_file(cls, file_path: str, **kwargs) -> _RawT:
+    def yield_raw_from_file(cls, file_path: str, **kwargs) -> Iterable[_RawT]:
         """Yield raw data from a file.
 
         Parameters
