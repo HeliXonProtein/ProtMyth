@@ -4,7 +4,6 @@
 ENV_PREFIX="$WORKSPACE/env"
 ENV_YAML="$WORKSPACE/env.yml"
 ENV_CACHE_YAML="$WORKSPACE/env/env.yml"
-ENV_CONDA_CONFIG="$WORKSPACE/.condarc"
 if [ ! -f $ENV_YAML ]; then
     echo "$ENV_YAML is not found."
     exit 1
@@ -22,8 +21,6 @@ else
 
     source $CONDA_BASE_PREFIX/etc/profile.d/conda.sh && \
     conda init bash && \
-    echo $ENV_CONDA_CONFIG && \
-    conda config -f $ENV_CONDA_CONFIG && \
     conda clean -i -y && \
     conda env create -p $ENV_PREFIX -f $ENV_YAML && \
     conda activate $ENV_PREFIX && \
