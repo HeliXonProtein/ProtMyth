@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# set proxy
+PROXY="192.168.1.64:7890"
+export http_proxy="http://$PROXY"
+export https_proxy="http://$PROXY"
+export HTTP_PROXY="http://$PROXY"
+export HTTPS_PROXY="http://$PROXY"
+
 # check env.yml
 ENV_PREFIX="$WORKSPACE/env"
 ENV_YAML="$WORKSPACE/env.yml"
@@ -21,8 +28,6 @@ else
 
     source $CONDA_BASE_PREFIX/etc/profile.d/conda.sh && \
     conda init bash && \
-    conda config --show-source && \
-    conda config --show channels && \
     conda clean -i -y && \
     conda env create -p $ENV_PREFIX -f $ENV_YAML && \
     conda activate $ENV_PREFIX && \
