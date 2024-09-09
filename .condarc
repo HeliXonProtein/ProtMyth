@@ -1,5 +1,5 @@
 show_channel_urls: true
 
 proxy_servers:
-  http: http://192.168.1.64:7890
-  https: http://192.168.1.64:7890
+  http: http://192.168.1.64:443
+  https: http://192.168.1.64:443
