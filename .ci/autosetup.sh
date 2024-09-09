@@ -22,6 +22,7 @@ else
 
     source $CONDA_BASE_PREFIX/etc/profile.d/conda.sh && \
     conda init bash && \
+    echo $ENV_CONDA_CONFIG && \
     conda config -f $ENV_CONDA_CONFIG && \
     conda clean -i -y && \
     conda env create -p $ENV_PREFIX -f $ENV_YAML && \
