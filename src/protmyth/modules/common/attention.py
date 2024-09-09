@@ -22,13 +22,3 @@ We will implement the following attention mechanisms and transform them into pro
 
 1. Place holder.
 """
-
-from torch import nn
-
-
-class Attention(nn.Module):
-    """
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
