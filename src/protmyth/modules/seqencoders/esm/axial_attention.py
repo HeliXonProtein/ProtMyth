@@ -3,16 +3,14 @@
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
-"""
-Axial Attention Modules from ESM
+"""Axial Attention Modules from ESM
 """
 
 from torch import nn
 
 
 class RowSelfAttention(nn.Module):
-    """
-    RowSelfAttention
+    """RowSelfAttention
     """
 
     def __init__(self) -> None:
@@ -20,8 +18,7 @@ class RowSelfAttention(nn.Module):
 
 
 class ColumnSelfAttention(nn.Module):
-    """
-    ColumnSelfAttention
+    """ColumnSelfAttention
     """
 
     def __init__(self) -> None:
