@@ -6,6 +6,8 @@ pipeline {
         ENV_PREFIX = "$WORKSPACE/env"
         CONDARC = "$WORKSPACE/.condarc"
         PATH = "$ENV_PREFIX/bin:$CONDA_BASE_PREFIX/bin:$PATH"
+        HTTP_PROXY = "http://192.168.1.64:7890"
+        HTTPS_PROXY = "http://192.168.1.64:7890"
     }
 
     stages {
