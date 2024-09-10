@@ -13,8 +13,9 @@ pipeline {
     stages {
         stage('Build') {
             steps {
+                env|grep -i proxy
                 echo 'Begin build stage...'
-                sh '.ci/autosetup.sh'
+                .ci/autosetup.sh
             }
         }
         stage('Static Test') {
