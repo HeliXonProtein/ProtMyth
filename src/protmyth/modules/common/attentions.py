@@ -27,8 +27,7 @@ from torch import nn
 
 
 class Attention(nn.Module):
-    """
-    Attention
+    """Attention
     """
 
     def __init__(self) -> None:
