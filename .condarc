@@ -1,10 +1,5 @@
-channels:
-  - defaults
 show_channel_urls: true
-default_channels:
-  - http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-  - http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r
-  - http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/msys2
-custom_channels:
-  conda-forge: http://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
-  pytorch: http://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+
+proxy_servers:
+  http: http://192.168.1.64:7890
+  https: http://192.168.1.64:7890
