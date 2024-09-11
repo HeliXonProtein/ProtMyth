@@ -11,7 +11,6 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'env|grep -i proxy'
                 echo 'Begin build stage...'
                 sh '.ci/autosetup.sh'
             }
