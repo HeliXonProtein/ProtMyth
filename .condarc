@@ -2,7 +2,7 @@ channels:
     - defaults
 show_channel_urls: true
 custom_channels:
-    conda-forge: https://prefix.dev/channels/conda-forge
-    pytorch: https://prefix.dev/channels/pytorch
-    bioconda: https://prefix.dev/channels/bioconda
-    nvidia: https://prefix.dev/channels/nvidia
+    conda-forge: https://prefix.dev/channels
+    pytorch: https://prefix.dev/channels
+    bioconda: https://prefix.dev/channels
+    nvidia: https://prefix.dev/channels
