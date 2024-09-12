@@ -48,3 +48,7 @@ default-docstring-type=numpy
 
 [REPORTS]
 output-format=junit
+
+[TYPECHECK]
+# Disable type checking for pytorch and numpy
+generated-members=torch.*,numpy.*
