@@ -77,12 +77,10 @@ class ProteinSequenceDataHolder(BaseHolder[ProteinSequence, ProteinSequenceTenso
             for aa_pos, aa in enumerate(sequence["seq"]):
                 if aa not in domain["alphabet"]:
                     raise ValueError(f"Invalid amino acid: {aa} in {sequence['seq']}")
-                else:
-                    seq_input.append(domain["mapping"][aa])
-                    seq_chain.append(seqidx)
-                    # TODO: add masking strategy here
-                    seq_mask.append(0)
-                    positions.append(aa_pos)
+                seq_input.append(domain["mapping"][aa])
+                seq_chain.append(seqidx)
+                seq_mask.append(0)
+                positions.append(aa_pos)
 
         return ProteinSequenceTensor(
             seq_input=torch.Tensor(seq_input),
