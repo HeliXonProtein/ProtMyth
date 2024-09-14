@@ -9,7 +9,6 @@
 from collections.abc import Iterable
 from typing import Any
 from unittest import TestCase
-from unittest.mock import patch
 
 from protmyth.data.baseholder import BaseHolder
 from protmyth.data.amino_acid_constants import (
