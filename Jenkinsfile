@@ -4,6 +4,7 @@ pipeline {
     environment {
         CONDA_BASE_PREFIX = "$HOME/miniconda3"
         ENV_PREFIX = "$WORKSPACE/env"
+        CONDARC = "$WORKSPACE/.condarc"
         PATH = "$ENV_PREFIX/bin:$CONDA_BASE_PREFIX/bin:$PATH"
     }
 
