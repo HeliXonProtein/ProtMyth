@@ -20,7 +20,14 @@ _MODULES: dict[str, dict[str, BaseModule]] = {
 
 
 def register_module(
-    name: Literal["common", "losses", "seqencoders", "seqdecoders", "structencoders", "structdecoders"]
+    name: Literal[
+        "common",
+        "losses",
+        "seqencoders",
+        "seqdecoders",
+        "structencoders",
+        "structdecoders",
+    ]
 ) -> Callable:
     """Decorator to register a module.
 

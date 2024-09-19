@@ -26,15 +26,23 @@ We will implement the following attention mechanisms and transform them into pro
 import einops
 import torch
 from torch import nn
-import jaxtyping
+from jaxtyping import Float
 import torchviz
 from graphviz import Digraph
 
+from typing import Optional
+from collections.abc import Sequence
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 
-class Attention(BaseModule[jaxtyping.Array[torch.Tensor, "..."]]):
-    """Multi-Head Attention"""
+
+@register_module("common")
+class Attention(BaseModule[Float[torch.Tensor, "..."]]):
+    """Common attention module, now it supports:
+        1.Multi-head
+        2.qk scaling
+        3.attention mask
+    """
 
     def __init__(
         self,
@@ -46,7 +54,9 @@ class Attention(BaseModule[jaxtyping.Array[torch.Tensor, "..."]]):
         use_bias: bool = False,
         gating: bool = True
     ) -> None:
-        """Args:
+        """Attention initialization.
+
+        Args:
             q_dim: Size of input query features.
             kv_dim: Size of input key and value features.
             c: Size of channels per head.
@@ -69,7 +79,7 @@ class Attention(BaseModule[jaxtyping.Array[torch.Tensor, "..."]]):
             bias=use_bias,
         )
         self.kv_linear = nn.Linear(
-            in_features=q_dim,
+            in_features=kv_dim,
             out_features=n_head * c * 2,
             bias=use_bias,
         )
@@ -89,25 +99,33 @@ class Attention(BaseModule[jaxtyping.Array[torch.Tensor, "..."]]):
 
     def _qk_scale(
         self,
-    ) -> jaxtyping.Array[torch.Tensor, "..."]:
+    ) -> Float[torch.Tensor, "..."]:
+        """scaling for attention logits
+        """
         return self.c ** 0.5
 
     def forward(
         self,
-        q_data: jaxtyping.Array[torch.Tensor, "..., N, q_dim"],
-        kv_data: jaxtyping.Array[torch.Tensor, "..., N, kv_dim"],
-    ) -> jaxtyping.Array[torch.Tensor, "..., N, out_dim"]:
-        """
+        q_data: Float[torch.Tensor, "... Q q_dim"],
+        kv_data: Float[torch.Tensor, "... K kv_dim"],
+        attn_mask: Optional[Float[torch.Tensor, "... #Q #K"]] = None,
+    ) -> Float[torch.Tensor, "... Q out_dim"]:
+        """Forward process of multi-head attention
+
         Args:
-            q_data: Query features, (..., N, q_dim).
-            kv_data: Key and value features, (..., N, kv_dim).
+            q_data: Query features, (..., Q, q_dim).
+            kv_data: Key and value features, (..., K, kv_dim).
+            attn_mask: Attention mask with size (..., Q/1, K/1), or None
         Returns:
-            Output features, (..., N, out_dim).
+            Output features, (..., Q, out_dim).
         """
-        q    = einops.rearrange(self.q_linear(q_data),   '... Q (H C) -> split ... Q H C')
-        k, v = einops.rearrange(self.kv_linear(kv_data), '... K (split H C) -> split ... K H C', split=2)
+        q = einops.rearrange(self.q_linear(q_data), '... Q (H C) -> ... Q H C', C=self.c)
+        k, v = einops.rearrange(self.kv_linear(kv_data), '... K (split H C) -> split ... K H C', split=2, C=self.c)
 
         logits = torch.einsum("...qhc,...khc->...hqk", q, k) * self._qk_scale()
+
+        if attn_mask is not None:
+            logits = torch.where(attn_mask.unsqueeze(-3), logits, -1e9)
 
         weights = nn.functional.softmax(logits, dim=-1)
         weighted_avg = torch.einsum("...hqk,...khc->...qhc", weights, v)
@@ -123,8 +141,22 @@ class Attention(BaseModule[jaxtyping.Array[torch.Tensor, "..."]]):
 
     def make_graph(
         self,
-        q_data: jaxtyping.Array[torch.Tensor, "..., N, q_dim"],
-        kv_data: jaxtyping.Array[torch.Tensor, "..., N, kv_dim"],
+        batch_dims: Sequence[int],
+        q_len: int,
+        kv_len: int,
+        device: torch.device,
     ) -> Digraph:
+        """Make a graph of the attention module.
+
+        Args:
+            batch_dims: batch_dims, same as ... in forward
+            q_len: the length of q_data, same as Q in forward
+            kv_len: the length of kv_data, same as K in forward
+        Returns:
+            Digraph: The graph of the attention module with random initialization.
         """
-        """
+        q_data = torch.randn(list(batch_dims) + [q_len, self.q_dim], device=device)
+        kv_data = torch.randn(list(batch_dims) + [kv_len, self.kv_dim], device=device)
+        attn_mask = torch.randint(0, 2, list(batch_dims) + [q_len, kv_len], device=device).bool()
+        output = self.forward(q_data, kv_data, attn_mask=attn_mask)
+        return torchviz.make_dot(output.mean(), params=dict(self.named_parameters()))
