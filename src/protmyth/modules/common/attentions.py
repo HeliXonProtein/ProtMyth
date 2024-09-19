@@ -26,7 +26,7 @@ We will implement the following attention mechanisms and transform them into pro
 import einops
 import torch
 from torch import nn
-from jaxtyping import Float
+from jaxtyping import Float, Bool
 import torchviz
 from graphviz import Digraph
 
@@ -108,7 +108,7 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
         self,
         q_data: Float[torch.Tensor, "... Q q_dim"],
         kv_data: Float[torch.Tensor, "... K kv_dim"],
-        attn_mask: Optional[Float[torch.Tensor, "... #Q #K"]] = None,
+        attn_mask: Optional[Bool[torch.Tensor, "... #Q #K"]] = None,
     ) -> Float[torch.Tensor, "... Q out_dim"]:
         """Forward process of multi-head attention
 
@@ -152,8 +152,9 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
             batch_dims: batch_dims, same as ... in forward
             q_len: the length of q_data, same as Q in forward
             kv_len: the length of kv_data, same as K in forward
+            device: the device of tensor
         Returns:
-            Digraph: The graph of the attention module with random initialization.
+            Output Digraph: the graph of the attention module with random initialization.
         """
         q_data = torch.randn(list(batch_dims) + [q_len, self.q_dim], device=device)
         kv_data = torch.randn(list(batch_dims) + [kv_len, self.kv_dim], device=device)

@@ -8,11 +8,8 @@
 
 import pytest
 import torch
-from jaxtyping import Float
 
 from protmyth.modules.common.attentions import Attention
-
-_ForwardReturnType = Float[torch.Tensor, "..."]
 
 
 @pytest.mark.parametrize(
