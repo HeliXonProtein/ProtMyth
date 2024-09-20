@@ -52,7 +52,7 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
         n_head: int,
         out_dim: int,
         use_bias: bool = False,
-        gating: bool = True
+        gating: bool = True,
     ) -> None:
         """Attention initialization.
 
