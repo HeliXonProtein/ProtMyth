@@ -13,7 +13,24 @@ import torch.nn.functional as F
 import numbers
 import collections
 
-def mask_mean(mask, value, dim=None, drop_mask_channel=False, eps=1e-10):
+from jaxtyping import Float, Bool
+from typing import Optional
+import torchviz
+from graphviz import Digraph
+import einops
+from collections.abc import Sequence
+
+from protmyth.modules.base import BaseModule
+from protmyth.modules.register import register_module
+
+
+def mask_mean(
+        mask: Float[torch.Tensor, "... Q q_dim"], 
+        value: Float[torch.Tensor, "... Q v_dim"],
+        dim: int=None,
+        drop_mask_channel: bool=False, 
+        eps: float=1e-10,
+    ) -> Float[torch.Tensor, "... Q z_dim"]:
     """Masked mean."""
     axis = dim
     if drop_mask_channel:
