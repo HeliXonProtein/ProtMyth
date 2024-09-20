@@ -8,6 +8,7 @@
 
 import pytest
 import torch
+import os
 
 from protmyth.modules.common.attentions import Attention
 
@@ -43,5 +44,6 @@ def test_attention_graph(
         kv_len=kv_len,
         device=torch.device("cpu"),
     )
-    dot.format = 'png'
-    dot.render(result_path)
+    if not os.path.exists(result_path):
+        dot.format = 'png'
+        dot.render(result_path)
