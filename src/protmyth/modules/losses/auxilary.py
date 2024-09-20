@@ -22,6 +22,8 @@ from collections.abc import Sequence
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 
+
+@register_module("auxilary")
 class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
     """Head for masked language modeling."""
 
@@ -74,7 +76,7 @@ class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
         output = self.forward(esm_embedding, gt_esm, esm_bert_mask)
         return torchviz.make_dot(output.mean(), params=dict(self.named_parameters()))
 
-
+@register_module("auxilary")
 class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
     def __init__(
             self,

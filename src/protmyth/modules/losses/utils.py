@@ -24,6 +24,7 @@ from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 
 
+@register_module("utils")
 def mask_mean(
         mask: Float[torch.Tensor, "... Q q_dim"], 
         value: Float[torch.Tensor, "... Q v_dim"],
