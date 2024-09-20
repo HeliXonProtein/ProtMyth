@@ -12,6 +12,8 @@ load-plugins =
     pylint.extensions.docparams,
     pylint.extensions.docstyle,
     pylint_junit
+# Ignore all typechecks and leave it for mypy
+disable = typecheck
 
 [MESSAGES CONTROL]
 enable = all
