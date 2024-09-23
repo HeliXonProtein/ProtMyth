@@ -6,13 +6,12 @@
 """This module contains row attention mechanisms used in ProtMyth. Based on the Attention class from common
 """
 
-
 import einops
 import torch
 import torchviz
 from graphviz import Digraph
 
-from typing import Optional
+from typing import Optional, Bool
 from collections.abc import Sequence
 from protmyth.modules.common.attentions import Attention
 
