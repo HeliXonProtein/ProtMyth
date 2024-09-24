@@ -7,13 +7,15 @@ from .axial_attention import ColumnSelfAttention, RowSelfAttention
 from protmyth.modules.base import BaseModule
 import torch
 import torch.nn as nn
-from typing import Optional
+from typing import Any, Union, Tuple
+from graphviz import Digraph
+
 """This module implements components of an Axial MSA Transformer.
 
 Classes:
     FeedForwardNetwork: Implements a feed-forward network with activation and dropout layers.
-    AxialTransformerLayer: Defines an Axial Transformer block with row-wise and column-wise self-attention 
-                           mechanisms, as well as a feed-forward network.
+    AxialTransformerLayer: Defines an Axial Transformer block with row-wise and
+    column-wise self-attention mechanisms, as well as a feed-forward network.
 
 Modules:
     RowSelfAttention (imported): Handles self-attention across rows of a multi-dimensional input.
@@ -31,11 +33,12 @@ Usage:
     the architecture.
 """
 
+
 class FeedForwardNetwork(BaseModule):
     """Implements a FeedForward Network with activation and dropout layers.
 
-    This module takes in an input tensor, applies a linear transformation, 
-    activation, and dropout, and then transforms it back to the original 
+    This module takes in an input tensor, applies a linear transformation,
+    activation, and dropout, and then transforms it back to the original
     embedding dimension.
 
     Args:
@@ -74,7 +77,10 @@ class FeedForwardNetwork(BaseModule):
         x = kwargs.get('x', args[0] if args else None)
 
         if x is None:
-            raise ValueError("Input tensor 'x' must be provided as the first positional argument or as a keyword argument.")
+            raise ValueError(
+                "Input tensor 'x' must be provided as the first positional "
+                "argument or as a keyword argument."
+            )
 
         # Feed-forward logic
         x = self.activation_fn(self.fc1(x))
@@ -82,13 +88,104 @@ class FeedForwardNetwork(BaseModule):
         x = self.fc2(x)
         return x
 
+    def make_graph(self, *args, **kwargs) -> Digraph:
+        """Generate a graphviz Digraph object representing the module's computation graph.
+
+        Args:
+            *args: Positional arguments to be passed to the module's forward method.
+            **kwargs: Keyword arguments to be passed to the module's forward method.
+
+        Returns:
+            A graphviz Digraph object representing the module's computation graph.
+        """
+        x = kwargs.get('x', args[0] if args else None)
+
+        if x is None:
+            raise ValueError(
+                "Input tensor 'x' must be provided as the first positional"
+                "argument or as a keyword argument."
+            )
+
+        graph = Digraph()
+
+        # Add nodes for input and operations
+        graph.node('Input', 'Input Tensor')
+        graph.node('FC1', 'Linear (FC1)')
+        graph.node('Activation', 'GELU Activation')
+        graph.node('Dropout', 'Dropout')
+        graph.node('FC2', 'Linear (FC2)')
+        graph.node('Output', 'Output Tensor')
+
+        # Define edges based on the forward pass
+        graph.edge('Input', 'FC1')
+        graph.edge('FC1', 'Activation')
+        graph.edge('Activation', 'Dropout')
+        graph.edge('Dropout', 'FC2')
+        graph.edge('FC2', 'Output')
+
+        return graph
+
+
+class NormalizedResidualBlock(BaseModule):
+    """A normalized residual block that applies a given layer followed by layer normalization.
+
+    This block computes the output as the sum of the input and the processed input
+    through the specified layer, followed by layer normalization and dropout.
+
+    Args:
+        layer (nn.Module): The neural network layer to be applied.
+        embedding_dim (int): The dimensionality of the input for layer normalization.
+        dropout_prob (float): The probability of dropout to apply after the layer.
+
+    Attributes:
+        layer (nn.Module): The neural network layer to be applied.
+        norm (nn.LayerNorm): The layer normalization applied to the output.
+        dropout (nn.Dropout): The dropout layer applied after the specified layer.
+    """
+
+    def __init__(self, layer: nn.Module, embedding_dim: int, dropout_prob: float) -> None:
+        super().__init__()
+        self.layer = layer
+        self.norm = nn.LayerNorm(embedding_dim)
+        self.dropout = nn.Dropout(dropout_prob)
+
+    def forward(self, x) -> Any:
+        """Forward pass for the normalized residual block.
+
+        Args:
+            x (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor after applying the layer, dropout,
+            and layer normalization.
+        """
+        residual = x
+        x = self.layer(x)
+        x = self.dropout(x)
+        return self.norm(x + residual)
+
+    def make_graph(self, *args, **kwargs) -> Digraph:
+        """Generate a graph representation of the block.
+
+        This method should implement the logic for creating a graph representation
+        of the block.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            Digraph: A directed graph representation of the block.
+        """
+        # Your graph generation code goes here
+        pass
 
 
 class AxialTransformerLayer(BaseModule):
     """Implements an Axial MSA Transformer block.
 
-    This layer includes row-wise and column-wise self-attention mechanisms 
-    followed by a feed-forward network. Residual connections and LayerNorm 
+    This layer includes row-wise and column-wise self-attention mechanisms
+    followed by a feed-forward network. Residual connections and LayerNorm
     are applied to each component.
 
     Args:
@@ -105,6 +202,8 @@ class AxialTransformerLayer(BaseModule):
         embedding_dim: int = 768,
         ffn_embedding_dim: int = 3072,
         num_attention_heads: int = 8,
+        channel_size: int = 12,
+        output_dim: int = 512,
         dropout: float = 0.1,
         attention_dropout: float = 0.1,
         activation_dropout: float = 0.1,
@@ -119,14 +218,18 @@ class AxialTransformerLayer(BaseModule):
         # Initialize row-wise and column-wise self-attention layers
         row_self_attention = RowSelfAttention(
             embedding_dim,
-            num_attention_heads,
+            c=channel_size,
+            out_dim=output_dim,
+            n_head=num_attention_heads,
             dropout=dropout,
             max_tokens_per_msa=max_tokens_per_msa,
         )
 
         column_self_attention = ColumnSelfAttention(
             embedding_dim,
-            num_attention_heads,
+            c=channel_size,
+            out_dim=output_dim,
+            n_head=num_attention_heads,
             dropout=dropout,
             max_tokens_per_msa=max_tokens_per_msa,
         )
@@ -163,7 +266,7 @@ class AxialTransformerLayer(BaseModule):
         self,
         *args,
         **kwargs,
-    ) -> torch.Tensor:
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, Any, Any]]:
         """Forward pass through the AxialTransformerLayer.
 
         Applies row-wise and column-wise self-attention followed by a feed-forward network.
@@ -195,7 +298,7 @@ class AxialTransformerLayer(BaseModule):
             self_attn_padding_mask=self_attn_padding_mask,
         )
         x = self.feed_forward_layer(x)
-        
+
         if need_head_weights:
             return x, column_attn, row_attn
         else:
