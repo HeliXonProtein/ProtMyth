@@ -5,6 +5,7 @@
 
 from protmyth.adaptors import mapper
 
+
 def linear_mapper(target_prefix: str = "", source_prefix: str = "") -> mapper.ModuleMapper:
     """Creates a linear mapper for weight and bias.
 
