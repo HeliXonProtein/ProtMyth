@@ -23,7 +23,7 @@ from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 
 
-@register_module("auxilary")
+@register_module("losses")
 class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
     """Head for masked language modeling."""
 
@@ -61,22 +61,9 @@ class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
         else:
             return loss
     
-    def make_graph(
-        self,
-        batch_dims: Sequence[int],
-        device: torch.device,
-    ) -> Digraph:
-        """Make a graph of the attention module.
-        Returns:
-            Output Digraph: the graph of the Relative_Positional_Embedding module with random initialization.
-        """
-        esm_embedding = torch.randn(list(batch_dims) + [self.in_features], device=device)
-        gt_esm = torch.randn(list(batch_dims) + [1], device=device)
-        esm_bert_mask = torch.randn(list(batch_dims) + [1], device=device)
-        output = self.forward(esm_embedding, gt_esm, esm_bert_mask)
-        return torchviz.make_dot(output.mean(), params=dict(self.named_parameters()))
 
-@register_module("auxilary")
+
+@register_module("losses")
 class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
     def __init__(
             self,
@@ -117,18 +104,3 @@ class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
             return loss, mask_pred
         else:
             return loss
-
-    def make_graph(
-        self,
-        batch_dims: Sequence[int],
-        device: torch.device,
-    ) -> Digraph:
-        """Make a graph of the attention module.
-        Returns:
-            Output Digraph: the graph of the Relative_Positional_Embedding module with random initialization.
-        """
-        esm_embedding = torch.randn(list(batch_dims) + [self.in_features], device=device)
-        gt_esm = torch.randn(list(batch_dims) + [1], device=device)
-        bert_mask = torch.randn(list(batch_dims) + [1], device=device)
-        output = self.forward(esm_embedding, gt_esm, bert_mask)
-        return torchviz.make_dot(output.mean(), params=dict(self.named_parameters()))
