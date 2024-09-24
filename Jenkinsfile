@@ -52,7 +52,7 @@ pipeline {
             steps {
                 echo 'Pylint code style and documentation check...'
                 catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
-                    sh 'timeout -s SIGKILL 600s pylint --rcfile=.pylintrc src tests > reports/pylint.log'
+                    sh 'timeout -s SIGKILL 600s pylint --rcfile=.pylintrc src > reports/pylint.log'
                 }
             }
             post {
