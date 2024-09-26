@@ -60,7 +60,7 @@ class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
             return loss, mask_pred
         else:
             return loss
-    
+
 
 
 @register_module("losses")
@@ -75,9 +75,9 @@ class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
         self.loss_fn = nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
 
     def forward(
-            self, 
-            esm_embedding: Float[torch.Tensor, "... Z z_dim"], 
-            gt_esm: Float[torch.Tensor, "... Z #z_dim"], 
+            self,
+            esm_embedding: Float[torch.Tensor, "... Z z_dim"],
+            gt_esm: Float[torch.Tensor, "... Z #z_dim"],
             bert_mask: Float[torch.Tensor, "... Z #z_dim"],
             get_embeds: bool=False,
     ) -> float:

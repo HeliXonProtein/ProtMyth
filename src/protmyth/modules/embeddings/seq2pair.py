@@ -18,7 +18,6 @@ from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 
 
-
 @register_module("embeddings")
 class RelativePositionalEmbedding(BaseModule[Float[torch.Tensor, "..."]]):
     """
@@ -79,7 +78,6 @@ class RelativePositionalEmbedding(BaseModule[Float[torch.Tensor, "..."]]):
         relpos_feat = einops.repeat(relpos_onehot, 'l1 l2 c -> b l1 l2 c', b=B).contiguous()
 
         return self.pair_activations(relpos_feat)
-
 
 
 @register_module("embeddings")

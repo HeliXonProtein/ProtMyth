@@ -8,19 +8,6 @@ SinusoidalPositionalEmbedding,
 LearnedPositionalEmbedding
 """
 
-import math
-import torch
-from torch import nn
-import torch.nn.functional as F
-
-from jaxtyping import Float, Bool
-from typing import Optional
-import torchviz
-from graphviz import Digraph
-import einops
-from collections.abc import Sequence
-
-from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 
 import math
@@ -196,59 +183,27 @@ class SinusoidalPositionalEmbedding(nn.Module):
         torch.Tensor
             Sinusoidal embeddings.
         """
+        # Assuming this is part of a method within a class
         half_dim = self.embed_dim // 2
-        emb = math.log(10000) / (half_dim - 1)
-        emb = torch.exp(torch.arange(half_dim, dtype=torch.float) * -emb)
-        emb = torch.arange(num_embeddings, dtype=torch.float).unsqueeze(1) * emb.unsqueeze(0)
-        emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1).view(num_embeddings, -1)
+        emb_scale = math.log(10000) / (half_dim - 1)
+
+        # Create the exponential scale
+        emb = torch.exp(torch.arange(half_dim, dtype=torch.float) * -emb_scale)
+
+        # Create the position indices and compute the sinusoidal embeddings
+        positions = torch.arange(num_embeddings, dtype=torch.float)
+        emb = einops.rearrange(positions, 'n -> n 1') * einops.rearrange(emb, 'd -> 1 d')
+
+        # Concatenate sine and cosine embeddings
+        emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
+
+        # If embed_dim is odd, zero pad the last dimension
         if self.embed_dim % 2 == 1:
-            # zero pad
             emb = torch.cat([emb, torch.zeros(num_embeddings, 1)], dim=1)
+
+            # Zero out the embeddings at the padding index, if specified
         if self.padding_idx is not None:
+            emb = einops.rearrange(emb, 'n d -> n d')
             emb[self.padding_idx, :] = 0
+
         return emb
-
-
-@register_module("embeddings")
-class NodeEmbedder(BaseModule[Float[torch.Tensor, "..."]]):
-    """
-    NodeEmbedder is a module that processes node features and embeds them
-    into a specified dimension.
-
-    Parameters
-    ----------
-    feat_dim : int
-        The dimension of the input node features.
-    embed_dim : int
-        The dimension of the output embeddings.
-
-    Attributes
-    ----------
-    preprocess_feat : nn.Linear
-        A linear layer that transforms input features to embeddings.
-    """
-
-    def __init__(self, feat_dim: int, embed_dim: int) -> None:
-        super().__init__()
-        self.preprocess_feat = nn.Linear(feat_dim, embed_dim)
-
-    def forward(self,
-                node_feat: Float[torch.Tensor, "... L embed_dim"]
-                ) -> Float[torch.Tensor, "... L embed_dim"]:
-        """
-        Forward pass for the NodeEmbedder.
-
-        Parameters
-        ----------
-        node_feat : torch.Tensor
-            Input tensor of node features with shape [..., sequence_length, q_dim].
-
-        Returns
-        -------
-        torch.Tensor
-            Output tensor with embedded node features.
-        """
-        node_embed = self.preprocess_feat(node_feat)
-        # If any reshaping or permuting is needed, use einops here
-        # Example: node_embed = rearrange(node_embed, '... Q q_dim -> ... q_dim Q')
-        return node_embed
