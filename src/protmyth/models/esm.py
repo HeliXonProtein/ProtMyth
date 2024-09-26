@@ -11,17 +11,13 @@ from torch import nn
 import torch.nn.functional as F
 import einops
 
-from modules import (
-    TransformerLayer,
-    LearnedPositionalEmbedding,
-    SinusoidalPositionalEmbedding,
-    RobertaLMHead,
-    ESM1bLayerNorm,
-    ContactPredictionHead,
-)
+from protmyth.modules.esm.axial_transformer import AxialTransformerLayer
+from protmyth.modules.embeddings.seq2node import LearnedPositionalEmbedding, SinusoidalPositionalEmbedding,
+from protmyth.modules.losses.auxilary import BertHead, ContactPredictHead
 
 
-class ProteinBertModel(nn.Module):
+
+class ESM(nn.Module):
     """
     ProteinBertModel integrates components for encoding protein sequences
     with a transformer architecture specifically suited for protein data.

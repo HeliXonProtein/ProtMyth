@@ -32,12 +32,11 @@ from graphviz import Digraph
 
 from typing import Optional
 from collections.abc import Sequence
-from protmyth.modules.base import BaseModule
-from protmyth.modules.register import register_module
+from protmyth.modules import base, register
 
 
-@register_module("common")
-class Attention(BaseModule[Float[torch.Tensor, "..."]]):
+@register.register_module("common")
+class Attention(base.BaseModule[Float[torch.Tensor, "..."]]):
     """Common attention module, now it supports:
         1.Multi-head
         2.qk scaling

@@ -19,88 +19,62 @@ from graphviz import Digraph
 import einops
 from collections.abc import Sequence
 
-from protmyth.modules.base import BaseModule
-from protmyth.modules.register import register_module
+from protmyth.modules import common, base, register
+
+def distogram_prediction_loss(
+    logits: Tensor,
+    distogram_fn: Callable[[Tensor], Tensor],
+    pos_cb_gt: Tensor,
+    pos_cb_mask: Tensor,
+    pair_mask: Tensor | None = None,
+) -> Tensor:
+    """Compute distogram prediction loss.
+
+    See alphafold supplementary 1.9.8 for details.
+
+    Args:
+        logits: Predicted logits of distogram bins, (B, N, N, num_bins).
+        distogram_fn: Callable that converts distance matrix to distogram, e.g. DistanceToBins.
+        pos_cb_gt: Ground truth CB positions, (B, N, 3).
+        pos_cb_mask: Masks of ground truth CBs, (B, N).
+        pair_mask: Additional masks of CB pairs. None or (B, N, N).
+
+    Returns:
+        Distogram loss, (B).
+    """
+    pair_dist = common.geometric.cdist(pos_cb_gt, pos_cb_gt)
+    pair_bin = distogram_fn(pair_dist)
+    logits = einops.rearrange(logits, "... i j d -> ... d i j ")
+    loss = F.cross_entropy(logits, pair_bin, reduction="none")
+
+    if pair_mask is None:
+        pair_mask = common.mask.node_mask_to_pair_mask(pos_cb_mask)
+    else:
+        pair_mask = pair_mask * common.mask.node_mask_to_pair_mask(pos_cb_mask)
+    loss = common.mask.masked_mean(loss, pair_mask, dim=(-1, -2))
+    return loss
 
 
-@register_module("losses")
-class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
-    """Head for masked language modeling."""
+def masked_msa_loss(
+    logits: Tensor,
+    msa_gt: torch.LongTensor,
+    bert_mask: torch.BoolTensor,
+) -> Tensor:
+    """
+    Computes BERT-style masked MSA loss.
 
-    def __init__(
-            self,
-            in_features: int=1280,
-            out_features: int=33,
-    ) -> None:
-        super(BertHead, self).__init__()
-        self.linear1 = nn.Linear(in_features, in_features)
-        self.layer_norm = nn.LayerNorm(in_features)
-        self.linear2 = nn.Linear(in_features, out_features)
-        self.loss_fn = nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
+    See alphafold supplementary subsection 1.9.9.
 
-    def forward(
-            self, 
-            esm_embedding: Float[torch.Tensor, "... Z z_dim"], 
-            gt_esm: Float[torch.Tensor, "... Z #z_dim"], 
-            esm_bert_mask: Float[torch.Tensor, "... Z #z_dim"],
-            get_embeds: bool=False,
-    ) -> float:
-        with torch.no_grad():
-            gt_esm = gt_esm.long()
-            gt_esm = torch.where(esm_bert_mask == 1, gt_esm, (torch.ones_like(gt_esm) * (-100)).type_as(gt_esm))
-
-        logits = nn.GELU(self.linear1(esm_embedding))
-        logits = self.layer_norm(logits)
-        logits = self.linear2(logits)
-        loss = self.loss_fn(logits.permute(0, 3, 1, 2).contiguous(), gt_esm) # nn.CrossEntropyLoss assumes the logits at dim 1
-        loss = utils.mask_mean(value=loss, mask=esm_bert_mask, dim=[-1, -2])
-
-        if get_embeds:
-            mask_pred = logits.softmax(dim=-1)
-            return loss, mask_pred
-        else:
-            return loss
-
-
-
-@register_module("losses")
-class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
-    def __init__(
-            self,
-            in_features: int=256,
-            out_features: int=23,
-    ) -> None:
-        super(MSAMaskPredictHead, self).__init__()
-        self.proj = nn.Linear(in_features, out_features, initializer='zeros')
-        self.loss_fn = nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
-
-    def forward(
-            self,
-            esm_embedding: Float[torch.Tensor, "... Z z_dim"],
-            gt_esm: Float[torch.Tensor, "... Z #z_dim"],
-            bert_mask: Float[torch.Tensor, "... Z #z_dim"],
-            get_embeds: bool=False,
-    ) -> float:
-        """
-
-        :param msa_embedding: torch.float32: [batch_size, num_clusters, L, 23]
-        :param gt_msa: torch.int: [batch_size, num_clusters, L]
-        :param bert_mask: torch.bool: [batch_size, num_clusters, L], bert_mask=1 means this slot needs prediction
-        :return: loss
-        """
-        with torch.no_grad():
-            gt_msa = gt_msa.long()
-            gt_msa = torch.where(bert_mask == 1, gt_msa, (torch.ones_like(gt_msa) * (-100)).type_as(gt_msa)) # masked gt
-
-        # to reduce templates from msa
-        msa_embedding = msa_embedding[:, :gt_msa.shape[1]]
-
-        logits = self.proj(msa_embedding)
-        loss = self.loss_fn(logits.permute(0, 3, 1, 2).contiguous(), gt_msa) # nn.CrossEntropyLoss assumes the logits at dim 1
-        loss = utils.mask_mean(value=loss, mask=bert_mask, dim=[-1, -2])
-
-        if get_embeds:
-            mask_pred = logits.softmax(dim=-1)
-            return loss, mask_pred
-        else:
-            return loss
+    Args:
+        logits: Predicted logits of residue distribution, (B, M, N, d_class).
+                d_class = 23 for monomer d_class = 22 for multimer.
+                The last dim for d_class = 23 is mask dim which will not be predicted.
+        msa_gt: Ground truth MSA, (B, M, N).
+        bert_mask: Of where gt msa is masked, (B, M, N).
+    Returns:
+        Masked MSA loss, (B).
+    """
+    logits = einops.rearrange(logits, "... s i d -> ... d s i ")
+    loss = F.cross_entropy(logits, msa_gt, reduction="none")
+    loss = common.mask.masked_mean(loss, bert_mask, dim=(-1, -2))
+    return loss

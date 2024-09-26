@@ -11,7 +11,7 @@ from protmyth.modules.base import BaseModule
 
 _MODULES: dict[str, dict[str, BaseModule]] = {
     "common": {},
-    "losses": {},
+    "auxilary": {},
     "embeddings": {},
     "seqencoders": {},
     "seqdecoders": {},
@@ -23,7 +23,7 @@ _MODULES: dict[str, dict[str, BaseModule]] = {
 def register_module(
     name: Literal[
         "common",
-        "losses",
+        "auxilary",
         "embeddings",
         "seqencoders",
         "seqdecoders",
