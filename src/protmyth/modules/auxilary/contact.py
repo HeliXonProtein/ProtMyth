@@ -10,9 +10,13 @@ import torch
 from torch import nn
 import einops
 
-from protmyth.modules import common
+from jaxtyping import Float
+from protmyth.modules.base import BaseModule
+from protmyth.modules.register import register_module
 
-class ContactPredictHead(modules_base.MyModule):
+
+@register_module("auxilary")
+class ContactPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
     """Predict distogram logits of pairwise residues.
 
     Before contact loss.

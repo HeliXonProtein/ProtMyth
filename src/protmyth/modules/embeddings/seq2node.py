@@ -8,8 +8,6 @@ SinusoidalPositionalEmbedding,
 LearnedPositionalEmbedding
 """
 
-from protmyth.modules.register import register_module
-
 import math
 import einops
 import torch
@@ -17,6 +15,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from jaxtyping import Float, Int
 from typing import Optional
+
+from protmyth.modules.base BaseModule
+from protmyth.modules.register import register_module
 
 
 @register_module("embeddings")

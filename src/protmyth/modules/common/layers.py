@@ -11,10 +11,12 @@ from jaxtyping import Float
 from torch import nn
 from torch.nn import functional as F
 
-from protmyth.modules import base, register
+from protmyth.modules.base import BaseModule
+from protmyth.modules.register import register_module
 
-@register.register_module("common")
-class DistanceToBins(base.BaseModule[Float[torch.Tensor, "..."]]):
+
+@register_module("common")
+class DistanceToBins(BaseModule[Float[torch.Tensor, "..."]]):
     """Module for discretizing distance to bins."""
 
     def __init__(self,
