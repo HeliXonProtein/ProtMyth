@@ -12,17 +12,15 @@ from protmyth.modules.common.attentions import Attention
 
 
 @pytest.mark.parametrize(
-    "q_dim, kv_dim, c, n_head, out_dim, use_bias, gating, batch_dims, q_len, kv_len, result_path",
+    "q_dim, kv_dim, c, n_head, out_dim, use_bias, gating, batch_dims, q_len, kv_len",
     [
-        (24, 32, 8, 2, 32, True, True, [3], 5, 5,
-         "/datapool/data3/storage/public/ProtMythItems/graphs/common/attention_1"),
-        (8, 6, 4, 4, 16, False, False, [2, 2, 2], 3, 8,
-         "/datapool/data3/storage/public/ProtMythItems/graphs/common/attention_2"),
+        (24, 32, 8, 2, 32, True, True, [3], 5, 5),
+        (8, 6, 4, 4, 16, False, False, [2, 2, 2], 3, 8),
     ],
 )
-def test_attention_graph(
+def test_attention(
         q_dim: int, kv_dim: int, c: int, n_head: int, out_dim: int, use_bias: bool,
-        gating: bool, batch_dims: List[int], q_len: int, kv_len: int, result_path: str
+        gating: bool, batch_dims: List[int], q_len: int, kv_len: int
 ) -> None:
     """Test the make_graph method of the Attention module.
 
