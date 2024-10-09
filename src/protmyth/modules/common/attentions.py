@@ -43,11 +43,11 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
 
     def __init__(
         self,
-        q_dim: int,
-        kv_dim: int,
-        c: int,
-        n_head: int,
-        out_dim: int,
+        q_dim: int = 32,
+        kv_dim: int = 32,
+        c: int = 8,
+        n_head: int = 4,
+        out_dim: int = 32,
         use_bias: bool = False,
         gating: bool = True,
     ) -> None:
