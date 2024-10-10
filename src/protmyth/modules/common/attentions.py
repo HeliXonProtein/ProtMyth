@@ -31,6 +31,7 @@ from jaxtyping import Float, Bool
 from typing import Optional
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
+from protmyth.modules.common.rotary_embedding import RotaryEmbedding
 
 
 @register_module("common")
@@ -39,6 +40,7 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
         1.Multi-head
         2.qk scaling
         3.attention mask
+        4.RoPE positional embedding
     """
 
     def __init__(
@@ -50,6 +52,7 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
         out_dim: int = 32,
         use_bias: bool = False,
         gating: bool = True,
+        use_rotary_embeddings: bool = False,
     ) -> None:
         """Attention initialization.
 
@@ -61,6 +64,7 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
             out_dim: Size of output features.
             use_bias: Whether to apply bias to qkv linear.
             gating: Whether to apply a sigmoid gating for output.
+            use_rotary_embeddings: Whether to use RoPE as the positional embedding. 
         """
         super().__init__()
         self.q_dim = q_dim
@@ -94,6 +98,10 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
             bias=True,
         )
 
+        self.rot_emb = None
+        if use_rotary_embeddings:
+            self.rot_emb = RotaryEmbedding(dim=self.c)
+
     def _qk_scale(
         self,
     ) -> Float[torch.Tensor, "..."]:
@@ -118,6 +126,8 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
         """
         q = einops.rearrange(self.q_linear(q_data), '... Q (H C) -> ... Q H C', C=self.c)
         k, v = einops.rearrange(self.kv_linear(kv_data), '... K (split H C) -> split ... K H C', split=2, C=self.c)
+        if self.rot_emb:
+            q, k = self.rot_emb(q, k)
 
         logits = torch.einsum("...qhc,...khc->...hqk", q, k) * self._qk_scale()
 
