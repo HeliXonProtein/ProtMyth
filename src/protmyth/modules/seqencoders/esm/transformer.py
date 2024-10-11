@@ -5,6 +5,7 @@ from jaxtyping import Float, Bool
 from typing import Optional, Tuple
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
+from protmyth.modules.seqencoder.bertnorm import ESM1LayerNorm,ESM1bLayerNorm 
 
 @register_module("seqencoders")
 class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
