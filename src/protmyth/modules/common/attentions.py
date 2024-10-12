@@ -27,11 +27,8 @@ import einops
 import torch
 from torch import nn
 from jaxtyping import Float, Bool
-import torchviz
-from graphviz import Digraph
 
 from typing import Optional
-from collections.abc import Sequence
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 
@@ -46,13 +43,13 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
 
     def __init__(
         self,
-        q_dim: int,
-        kv_dim: int,
-        c: int,
-        n_head: int,
-        out_dim: int,
+        q_dim: int = 32,
+        kv_dim: int = 32,
+        c: int = 8,
+        n_head: int = 4,
+        out_dim: int = 32,
         use_bias: bool = False,
-        gating: bool = True
+        gating: bool = True,
     ) -> None:
         """Attention initialization.
 
@@ -138,26 +135,3 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
         output = self.output_linear(weighted_avg)
 
         return output
-
-    def make_graph(
-        self,
-        batch_dims: Sequence[int],
-        q_len: int,
-        kv_len: int,
-        device: torch.device,
-    ) -> Digraph:
-        """Make a graph of the attention module.
-
-        Args:
-            batch_dims: batch_dims, same as ... in forward
-            q_len: the length of q_data, same as Q in forward
-            kv_len: the length of kv_data, same as K in forward
-            device: the device of tensor
-        Returns:
-            Output Digraph: the graph of the attention module with random initialization.
-        """
-        q_data = torch.randn(list(batch_dims) + [q_len, self.q_dim], device=device)
-        kv_data = torch.randn(list(batch_dims) + [kv_len, self.kv_dim], device=device)
-        attn_mask = torch.randint(0, 2, list(batch_dims) + [q_len, kv_len], device=device).bool()
-        output = self.forward(q_data, kv_data, attn_mask=attn_mask)
-        return torchviz.make_dot(output.mean(), params=dict(self.named_parameters()))

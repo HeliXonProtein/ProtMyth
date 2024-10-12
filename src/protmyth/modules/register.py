@@ -10,7 +10,9 @@ from typing import Literal, Callable
 from protmyth.modules.base import BaseModule
 
 _MODULES: dict[str, dict[str, BaseModule]] = {
+    "auxilary": {},
     "common": {},
+    "embeddings": {},
     "losses": {},
     "seqencoders": {},
     "seqdecoders": {},
@@ -21,12 +23,14 @@ _MODULES: dict[str, dict[str, BaseModule]] = {
 
 def register_module(
     name: Literal[
+        "auxilary",
         "common",
+        "embeddings",
         "losses",
         "seqencoders",
         "seqdecoders",
         "structencoders",
-        "structdecoders",
+        "structdeocders"
     ]
 ) -> Callable:
     """Decorator to register a module.

@@ -4,13 +4,13 @@
 # Thanks for using ProtMyth!
 
 import torch
-import torch.nn as nn
+from torch import nn
 from graphviz import Digraph
-from jaxtyping import Float, Shaped
-from einops import rearrange
+from jaxtyping import Float
 from protmyth.modules.base import BaseModule
 from typing import Sequence
 import torchviz
+
 
 class ESM1LayerNorm(BaseModule):
     """Layer normalization for ESM1 model.
@@ -24,13 +24,13 @@ class ESM1LayerNorm(BaseModule):
     affine : bool, optional
         If True, the module has learnable affine parameters (default is True).
     """
-    
+
     def __init__(self, hidden_size: int | Sequence[int], eps: float = 1e-12, affine: bool = True):
         super().__init__()
         self.hidden_size = (hidden_size,) if isinstance(hidden_size, int) else tuple(hidden_size)
         self.eps = eps
         self.affine = bool(affine)
-        
+
         if self.affine:
             self.weight = nn.Parameter(torch.ones(self.hidden_size))
             self.bias = nn.Parameter(torch.zeros(self.hidden_size))
@@ -56,7 +56,7 @@ class ESM1LayerNorm(BaseModule):
         x_zeromean = x - means
         variances = x_zeromean.pow(2).mean(dims, keepdim=True)
         x = x_zeromean / torch.sqrt(variances + self.eps)
-        
+
         if self.affine:
             x = (self.weight * x) + self.bias
         return x
@@ -99,7 +99,7 @@ class ESM1bLayerNorm(BaseModule):
         self.hidden_size = (hidden_size,) if isinstance(hidden_size, int) else tuple(hidden_size)
         self.eps = eps
         self.affine = bool(affine)
-        
+
         if self.affine:
             self.weight = nn.Parameter(torch.ones(self.hidden_size))
             self.bias = nn.Parameter(torch.zeros(self.hidden_size))
@@ -125,7 +125,7 @@ class ESM1bLayerNorm(BaseModule):
         x_zeromean = x - means
         variances = x_zeromean.pow(2).mean(dims, keepdim=True)
         x = x_zeromean / torch.sqrt(variances + self.eps)
-        
+
         if self.affine:
             x = (self.weight * x) + self.bias
         return x
@@ -148,4 +148,3 @@ class ESM1bLayerNorm(BaseModule):
         x_data = torch.randn(list(batch_dims) + list(self.hidden_size), device=device)
         output = self.forward(x_data)
         return torchviz.make_dot(output.mean(), params=dict(self.named_parameters()))
-

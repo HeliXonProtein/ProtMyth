@@ -7,10 +7,8 @@
 """
 
 
-import abc
 from typing import Generic, TypeVar, Any
 
-from graphviz import Digraph
 # import jaxtyping
 from torch import nn
 
@@ -44,16 +42,3 @@ class BaseModule(nn.Module, Generic[_ModuleReturnT]):
 
     def __call__(self, *args: Any, **kwds: Any) -> _ModuleReturnT:
         return super().__call__(*args, **kwds)
-
-    @abc.abstractmethod
-    def make_graph(self, *args, **kwargs) -> Digraph:
-        """Generate a graphviz Digraph object representing the module's computation graph.
-
-        Args:
-            *args: Positional arguments to be passed to the module's forward method.
-            **kwargs: Keyword arguments to be passed to the module's forward method.
-
-        Returns:
-            A graphviz Digraph object representing the module's computation graph.
-        """
-        raise NotImplementedError("make_graph method not implemented")

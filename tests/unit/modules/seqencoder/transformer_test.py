@@ -5,8 +5,6 @@
 
 import pytest
 import torch
-from jaxtyping import Float, Bool
-from typing import Tuple, Optional
 from protmyth.modules.seqencoders.esm.transformer_3 import TransformerLayer
 
 
@@ -112,7 +110,7 @@ def test_rope_changes_query_key(transformer_with_rope: TransformerLayer) -> None
     """
     batch_size, seq_len, embed_dim = 8, 16, 128
     x = torch.randn(batch_size, seq_len, embed_dim)
-    positions = torch.randn(batch_size, seq_len, 2)
+    # positions = torch.randn(batch_size, seq_len, 2)
 
     # Apply RoPE
     transformer = transformer_with_rope
@@ -207,4 +205,3 @@ def test_forward_with_need_head_weights(transformer_without_rope: TransformerLay
     # Assert output shape
     assert output.shape == (batch_size, seq_len, embed_dim), "Output shape mismatch when head weights are requested."
     assert attn_weights is not None, "Attention weights should be returned when requested."
-

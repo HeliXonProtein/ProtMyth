@@ -3,11 +3,11 @@
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 import torch
-import torch.nn as nn
+from torch import nn
 import einops
-from jaxtyping import Float, Bool
+from jaxtyping import Float
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 from protmyth.modules.seqencoders.esm.bertnorm import ESM1LayerNorm, ESM1bLayerNorm
@@ -17,7 +17,8 @@ from protmyth.modules.common.rotary_embedding import RotaryEmbedding  # Import t
 
 @register_module("seqencoders")
 class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
-    """Transformer layer block implementing self-attention and feed-forward networks, with optional Rotary Position Encoding (RoPE).
+    """Transformer layer block implementing self-attention and feed-forward networks,
+    with optional Rotary Position Encoding (RoPE).
 
     Parameters
     ----------
@@ -35,12 +36,6 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         Whether to use Rotary Position Embedding (RoPE). Default is False.
     gating : bool, optional
         Whether to use gating in the attention mechanism. Default is True.
-    max_seq_len : int, optional
-        Maximum sequence length for RoPE. Default is 512.
-    position_dimensions : int, optional
-        Number of position dimensions for RoPE. Default is 2.
-    rope_frequencies : float, optional
-        Frequency scaling for RoPE. Default is 1e4.
     """
 
     def __init__(
@@ -52,9 +47,6 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         use_esm1b_layer_norm: bool = False,
         use_rotary_embeddings: bool = False,
         gating: bool = True,
-        max_seq_len: int = 512,
-        position_dimensions: int = 2,
-        rope_frequencies: float = 1e4,
     ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
@@ -89,28 +81,24 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         self.fc2 = nn.Linear(self.ffn_embed_dim, self.embed_dim)
         self.final_layer_norm = BertLayerNorm(self.embed_dim)
 
+
     def forward(
         self,
-        x: Float[torch.Tensor, "batch seq_len embed_dim"],
-        positions: Float[torch.Tensor, "batch seq_len position_dim"],
-        self_attn_mask: Optional[Bool[torch.Tensor, "batch seq_len seq_len"]] = None,
-        self_attn_padding_mask: Optional[Bool[torch.Tensor, "batch seq_len"]] = None,
-        need_head_weights: bool = False
-    ) -> Tuple[Float[torch.Tensor, "batch seq_len embed_dim"], Optional[Float[torch.Tensor, "batch heads seq_len seq_len"]]]:
+        **kwargs: Any
+    ) -> Tuple[
+        Float[torch.Tensor, "batch seq_len embed_dim"],
+        Optional[Float[torch.Tensor, "batch heads seq_len seq_len"]]
+    ]:
         """Forward pass through the Transformer layer with optional RoPE.
 
         Parameters
         ----------
-        x : torch.Tensor
-            Input tensor of shape (batch, seq_len, embed_dim).
-        positions : torch.Tensor
-            Positional encoding tensor of shape (batch, seq_len, position_dim) for RoPE.
-        self_attn_mask : Optional[torch.Tensor], optional
-            Attention mask tensor of shape (batch, seq_len, seq_len). Default is None.
-        self_attn_padding_mask : Optional[torch.Tensor], optional
-            Padding mask tensor of shape (batch, seq_len). Default is None.
-        need_head_weights : bool, optional
-            Whether to return the attention weights. Default is False.
+        **kwargs : Any
+            Keyword arguments. Accepts:
+                x : torch.Tensor
+                    Input tensor of shape (batch, seq_len, embed_dim).
+                self_attn_mask : Optional[torch.Tensor], optional
+                    Attention mask tensor of shape (batch, seq_len, seq_len). Default is None.
 
         Returns
         -------
@@ -119,6 +107,9 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         Optional[torch.Tensor]
             Attention weights, if `need_head_weights` is True. Otherwise, returns None.
         """
+        x = kwargs.get('x')
+        self_attn_mask = kwargs.get('self_attn_mask', None)
+
         residual = x
         x = self.self_attn_layer_norm(x)
 
@@ -174,4 +165,3 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         k_rot = einops.rearrange(k_rope, 'b n h d -> b n (h d)')
 
         return q_rot, k_rot
-
