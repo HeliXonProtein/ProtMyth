@@ -10,7 +10,8 @@ import pytest
 import torch
 from typing import Union
 from jaxtyping import Float
-from protmyth.modules.auxilary.losses import RobertaLMHead  # Adjust the import path as necessary
+from typing import Optional
+from protmyth.modules.auxilary.losses import RobertaLMHead, ContactPredictionHead  # Adjust the import path as necessary
 
 
 @pytest.mark.parametrize(
@@ -19,8 +20,9 @@ from protmyth.modules.auxilary.losses import RobertaLMHead  # Adjust the import 
         # Test case 1: basic dim=1 test
         (
             1, 1,
-            torch.tensor([[0, 1, 2, 3, 4, 5, 6]]),
-            torch.tensor([[0, 1, 2, 3, 4, 5, 6]])
+            torch.tensor([0, 1, 2, 3, 4, 5, 6]),
+            torch.tensor([0, 1, 2, 3, 4, 5, 6])，
+            torch.tensor([0, 1, 2, 3, 4, 5, 6])
         ),
         # Add more test cases as needed
     ]
@@ -42,7 +44,7 @@ def test_RobertaLMHead(
     """
     device = torch.device('cpu')
 
-    # Initialize the DistanceToBins module
+    # Initialize the RobertaLMHead module
     module = RobertaLMHead(
         embed_dim=embed_dim,
         output_dim=output_dim,
@@ -55,6 +57,61 @@ def test_RobertaLMHead(
 
     # Perform the forward pass
     output = module(features)
+
+    # Assert the output matches the expected output
+    assert torch.equal(output, expected_output), f"Expected output {expected_output}, but got {output}"
+
+
+
+@pytest.mark.parametrize(
+    "in_features, prepend_bos, append_eos, bias, eos_idx, tokens, attentions, expected_output",
+    [
+        # Test case 1: basic dim=1 test
+        (
+            1, True, True, True, None,
+            torch.tensor([0, 1, 2, 3, 4, 5, 6]),
+            torch.tensor([0, 1, 2, 3, 4, 5, 6]),
+            torch.tensor([0, 1, 2, 3, 4, 5, 6])
+        ),
+        # Add more test cases as needed
+    ]
+)
+def ContactPredictionHead(
+    in_features: int,
+    prepend_bos: int,
+    append_eos: bool,
+    bias: bool,
+    eos_idx: Optional[int] = None,
+    tokens: Float[torch.Tensor, "..."]=None,
+    attentions: Float[torch.Tensor, "..."]=None,
+    expected_output: Float[torch.Tensor, "...Z w_dim"]=None
+) -> None:
+    """
+    Test the ContactPredictionHead module with various configurations.
+
+    Parameters
+    ----------
+    expected_output : torch.Tensor
+        The expected output tensor.
+    """
+    device = torch.device('cpu')
+
+    # Initialize the ContactPredictionHead module
+    module = ContactPredictionHead(
+        in_features=in_features,
+        prepend_bos=prepend_bos,
+        append_eos=append_eos,
+        bias=bias,
+        eos_idx=eos_idx
+    )
+
+    # Move inputs to the correct device
+    tokens = tokens.to(device)
+    attentions = attentions.to(device)
+    expected_output = expected_output.to(device)
+
+    # Perform the forward pass
+    output = module(tokens, attentions)
 
     # Assert the output matches the expected output
     assert torch.equal(output, expected_output), f"Expected output {expected_output}, but got {output}"

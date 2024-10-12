@@ -71,7 +71,7 @@ class RobertaLMHead(BaseModule[Float[torch.Tensor, "..."]]):
             self, 
             embed_dim: int=1280,
             output_dim: int=33,
-            weight: Float[torch.Tensor, "..."]
+            weight: Float[torch.Tensor, "..."]=None
         ) -> None:
         super(RobertaLMHead, self).__init__()
         self.dense = nn.Linear(embed_dim, embed_dim)
@@ -142,3 +142,71 @@ class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
             return loss, mask_pred
         else:
             return loss
+
+
+def apc(
+    x:  Float[torch.Tensor, "..."]
+    ) ->  Float[torch.Tensor, "..."]:
+    "Perform average product correct, used for contact prediction."
+    a1 = x.sum(-1, keepdims=True)
+    a2 = x.sum(-2, keepdims=True)
+    a12 = x.sum((-1, -2), keepdims=True)
+
+    avg = a1 * a2
+    avg.div_(a12)  # in-place to reduce memory
+    normalized = x - avg
+    return normalized
+
+
+def symmetrize(
+        x: Float[torch.Tensor, "..."]
+    ) -> Float[torch.Tensor, "..."]:
+    "Make layer symmetric in final two dimensions, used for contact prediction."
+    return x + x.transpose(-1, -2)
+
+
+class ContactPredictionHead(nn.Module):
+    """Performs symmetrization, apc, and computes a logistic regression on the output features"""
+
+    def __init__(
+        self,
+        in_features: int,
+        prepend_bos: bool,
+        append_eos: bool,
+        bias=True,
+        eos_idx: Optional[int] = None,
+    ) -> None:
+        super(ContactPredictionHead).__init__()
+        self.in_features = in_features
+        self.prepend_bos = prepend_bos
+        self.append_eos = append_eos
+        if append_eos and eos_idx is None:
+            raise ValueError("Using an alphabet with eos token, but no eos token was passed in.")
+        self.eos_idx = eos_idx
+        self.regression = nn.Linear(in_features, 1, bias)
+        self.activation = nn.Sigmoid()
+
+    def forward(
+            self,
+            tokens: Float[torch.Tensor, "..."],
+            attentions: Float[torch.Tensor, "..."]
+        ) -> Float[torch.Tensor, "..."]:
+        # remove eos token attentions
+        if self.append_eos:
+            eos_mask = tokens.ne(self.eos_idx).to(attentions)
+            eos_mask = eos_mask.unsqueeze(1) * eos_mask.unsqueeze(2)
+            attentions = attentions * eos_mask[:, None, None, :, :]
+            attentions = attentions[..., :-1, :-1]
+        # remove cls token attentions
+        if self.prepend_bos:
+            attentions = attentions[..., 1:, 1:]
+        batch_size, layers, heads, seqlen, _ = attentions.size()
+        attentions = attentions.view(batch_size, layers * heads, seqlen, seqlen)
+
+        # features: B x C x T x T
+        attentions = attentions.to(
+            self.regression.weight.device
+        )  # attentions always float32, may need to convert to float16
+        attentions = apc(symmetrize(attentions))
+        attentions = attentions.permute(0, 2, 3, 1)
+        return self.activation(self.regression(attentions).squeeze(3))
