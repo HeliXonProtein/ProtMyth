@@ -1,3 +1,8 @@
+# Copyright (c) 2024 Helixon Limited.
+#
+# This file is a part of ProtMyth and is released under the MIT License.
+# Thanks for using ProtMyth!
+
 import torch
 import torch.nn as nn
 from graphviz import Digraph
@@ -8,8 +13,7 @@ from typing import Sequence
 import torchviz
 
 class ESM1LayerNorm(BaseModule):
-    """
-    Layer normalization for ESM1 model.
+    """Layer normalization for ESM1 model.
 
     Parameters
     ----------
@@ -34,8 +38,7 @@ class ESM1LayerNorm(BaseModule):
             self.weight, self.bias = None, None
 
     def forward(self, x: Float[torch.Tensor, "batch ..."]) -> Float[torch.Tensor, "batch ..."]:
-        """
-        Perform forward pass of the layer normalization.
+        """Perform forward pass of the layer normalization.
 
         Parameters
         ----------
@@ -59,8 +62,7 @@ class ESM1LayerNorm(BaseModule):
         return x
 
     def make_graph(self, batch_dims: Sequence[int], device: torch.device) -> Digraph:
-        """
-        Create a graph representation of the layer norm operation.
+        """Create a graph representation of the layer norm operation.
 
         Parameters
         ----------
@@ -80,8 +82,7 @@ class ESM1LayerNorm(BaseModule):
 
 
 class ESM1bLayerNorm(BaseModule):
-    """
-    Layer normalization for ESM1b model.
+    """Layer normalization for ESM1b model.
 
     Parameters
     ----------
@@ -106,8 +107,7 @@ class ESM1bLayerNorm(BaseModule):
             self.weight, self.bias = None, None
 
     def forward(self, x: Float[torch.Tensor, "batch ..."]) -> Float[torch.Tensor, "batch ..."]:
-        """
-        Perform forward pass of the layer normalization.
+        """Perform forward pass of the layer normalization.
 
         Parameters
         ----------
@@ -131,8 +131,7 @@ class ESM1bLayerNorm(BaseModule):
         return x
 
     def make_graph(self, batch_dims: Sequence[int], device: torch.device) -> Digraph:
-        """
-        Create a graph representation of the layer norm operation.
+        """Create a graph representation of the layer norm operation.
 
         Parameters
         ----------
