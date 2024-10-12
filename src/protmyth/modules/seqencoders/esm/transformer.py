@@ -3,11 +3,11 @@
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple
 import torch
 from torch import nn
 import einops
-from jaxtyping import Float
+from jaxtyping import Float, Bool
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 from protmyth.modules.seqencoders.esm.bertnorm import ESM1LayerNorm, ESM1bLayerNorm
@@ -81,16 +81,14 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         self.fc2 = nn.Linear(self.ffn_embed_dim, self.embed_dim)
         self.final_layer_norm = BertLayerNorm(self.embed_dim)
 
-
     def forward(
         self,
-        **kwargs: Any
-    ) -> Tuple[
-        Float[torch.Tensor, "batch seq_len embed_dim"],
-        Optional[Float[torch.Tensor, "batch heads seq_len seq_len"]]
-    ]:
+        x: Float[torch.Tensor, "batch seq_len embed_dim"],
+        positions: Float[torch.Tensor, "batch seq_len position_dim"],
+        self_attn_mask: Optional[Bool[torch.Tensor, "batch seq_len seq_len"]] = None,
+        self_attn_padding_mask: Optional[Bool[torch.Tensor, "batch seq_len"]] = None,
+    ) -> Float[torch.Tensor, "batch seq_len embed_dim"]:
         """Forward pass through the Transformer layer with optional RoPE.
-
         Parameters
         ----------
         **kwargs : Any
@@ -104,12 +102,7 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         -------
         torch.Tensor
             Output tensor of shape (batch, seq_len, embed_dim).
-        Optional[torch.Tensor]
-            Attention weights, if `need_head_weights` is True. Otherwise, returns None.
         """
-        x = kwargs.get('x')
-        self_attn_mask = kwargs.get('self_attn_mask', None)
-
         residual = x
         x = self.self_attn_layer_norm(x)
 
@@ -130,7 +123,7 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         x = self.fc2(x)
         x = residual + x
 
-        return x, None
+        return x
 
     def _apply_rope_to_qk(
         self,
