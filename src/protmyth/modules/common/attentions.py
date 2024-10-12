@@ -50,7 +50,7 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
         out_dim: int = 32,
         use_bias: bool = False,
         gating: bool = True,
-        use_rotary_embeddings: bool = False
+        use_rotary_embeddings: bool = False,
     ) -> None:
         """Attention initialization.
 
@@ -62,6 +62,7 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
             out_dim: Size of output features.
             use_bias: Whether to apply bias to qkv linear.
             gating: Whether to apply a sigmoid gating for output.
+            use_rotary_embeddings: Whether to use RoPE as the positional embedding.
         """
         super().__init__()
         self.q_dim = q_dim
