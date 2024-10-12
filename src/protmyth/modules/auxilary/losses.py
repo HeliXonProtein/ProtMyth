@@ -12,6 +12,7 @@ import torch.nn.functional as F
 
 import losses.utils as utils
 
+import math
 from jaxtyping import Float, Bool
 from typing import Optional
 import torchviz
@@ -60,7 +61,44 @@ class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
             return loss, mask_pred
         else:
             return loss
-    
+
+
+@register_module("losses")
+class RobertaLMHead(BaseModule[Float[torch.Tensor, "..."]]):
+    """Head for masked language modeling."""
+
+    def __init__(
+            self, 
+            embed_dim: int=1280,
+            output_dim: int=33,
+            weight: Float[torch.Tensor, "..."]
+        ) -> None:
+        super(RobertaLMHead, self).__init__()
+        self.dense = nn.Linear(embed_dim, embed_dim)
+        self.layer_norm = torch.nn.LayerNorm(embed_dim)
+        self.weight = weight
+        self.bias = nn.Parameter(torch.zeros(output_dim))
+
+    def forward(
+            self, 
+            features: Float[torch.Tensor, "...Z f_dim"]
+        ) -> Float[torch.Tensor, "... Z w_dim"]:
+        x = self.dense(features)
+        x = gelu(x)
+        x = self.layer_norm(x)
+        # project back to size of vocabulary with bias
+        x = F.linear(x, self.weight) + self.bias
+        return x
+
+
+def gelu(x):
+    """Implementation of the gelu activation function.
+
+    For information: OpenAI GPT's gelu is slightly different
+    (and gives slightly different results):
+    0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
+    """
+    return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
 
 
 @register_module("losses")
