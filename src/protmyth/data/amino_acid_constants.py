@@ -35,31 +35,39 @@ STANDARD_AMINO_ACIDS_20 = [
     "V",
 ]
 
-STANDARD_AMINO_ACIDS_22 = [
-    "A",
-    "R",
-    "N",
-    "D",
-    "C",
-    "Q",
-    "E",
-    "G",
-    "H",
-    "I",
-    "L",
-    "K",
-    "M",
-    "F",
-    "P",
-    "S",
-    "T",
-    "W",
-    "Y",
-    "V",
+#   from https://github.com/biopython/biopython/blob/5ee5e69e649dbe17baefe3919e56e60b54f8e08f/Bio/Data/IUPACData.py
+#   B = "Asx";  aspartic acid or asparagine (D or N)
+#   X = "Xxx";  unknown or 'other' amino acid
+#   Z = "Glx";  glutamic acid or glutamine (E or Q)
+#   http://www.chem.qmul.ac.uk/iupac/AminoAcid/A2021.html#AA212
+#
+#   J = "Xle";  leucine or isoleucine (L or I, used in NMR)
+#   Mentioned in http://www.chem.qmul.ac.uk/iubmb/newsletter/1999/item3.html
+#   Also the International Nucleotide Sequence Database Collaboration (INSDC)
+#   (i.e. GenBank, EMBL, DDBJ) adopted this in 2006
+#   http://www.ddbj.nig.ac.jp/insdc/icm2006-e.html
+#
+#   Xle (J); Leucine or Isoleucine
+#   The residue abbreviations, Xle (the three-letter abbreviation) and J
+#   (the one-letter abbreviation) are reserved for the case that cannot
+#   experimentally distinguish leucine from isoleucine.
+#
+#   U = "Sec";  selenocysteine
+#   http://www.chem.qmul.ac.uk/iubmb/newsletter/1999/item3.html
+#
+#   O = "Pyl";  pyrrolysine
+#   http://www.chem.qmul.ac.uk/iubmb/newsletter/2009.html#item35
+
+STANDARD_AMINO_ACIDS_22 = STANDARD_AMINO_ACIDS_20 + [
     "O",  # L-Pyrrolysine
     "U",  # L-Selenocysteine
 ]
 
+IUPAC_AMINO_ACIDS = STANDARD_AMINO_ACIDS_22 + [
+    "B",  # Asx; Asparagine or aspartic acid
+    "Z",  # Glx; Glutamine or glutamic acid
+    "J",  # Xle; Leucine or Isoleucine
+]
 
 STANDARD_AA_1to3 = {
     "A": "ALA",
@@ -87,8 +95,18 @@ STANDARD_AA_1to3 = {
     "X": "UNK",
 }
 
-STANDARD_AA_3to1 = {v: k for k, v in STANDARD_AA_1to3.items()}
+AUGMENTED_AA_1to3 = dict(
+    list(STANDARD_AA_1to3.items()) + list({
+        "B": "ASX",
+        "Z": "GLX",
+        "J": "XLE",
+        "U": "SEC",
+        "O": "PYL",
+    }.items())
+)
 
+STANDARD_AA_3to1 = {v: k for k, v in STANDARD_AA_1to3.items()}
+AUGMENTED_AA_3to1 = {v: k for k, v in AUGMENTED_AA_1to3.items()}
 
 NON_STANDARD_SUBSTITUTIONS = {
     "2AS": "ASP",
