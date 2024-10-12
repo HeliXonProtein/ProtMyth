@@ -50,7 +50,7 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
         out_dim: int = 32,
         use_bias: bool = False,
         gating: bool = True,
-        use_rotary_embeddings: bool = False,
+        use_rotary_embeddings: bool = False
     ) -> None:
         """Attention initialization.
 
@@ -127,7 +127,6 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
         if self.rot_emb:
             q, k = self.rot_emb(q, k)
 
-
         logits = torch.einsum("...qhc,...khc->...hqk", q, k) * self._qk_scale()
 
         if attn_mask is not None:
@@ -145,8 +144,9 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
 
         return output
 
+
 @register_module("common")
-class RotaryEmbedding(BaseModule[Float[torch.Tensor, "..."]]):
+class RotaryEmbedding(nn.Module):
     """Implements rotary positional embedding for transformer models."""
 
     def __init__(self, dim: int, *_, **__) -> None:
@@ -160,9 +160,8 @@ class RotaryEmbedding(BaseModule[Float[torch.Tensor, "..."]]):
         inv_freq = 1.0 / (10000 ** (torch.arange(0, dim, 2).float() / dim))
         self.register_buffer("inv_freq", inv_freq)
 
-        self._seq_len_cached = None
-        self._cos_cached = None
-        self._sin_cached = None
+        self._cos_cached = torch.zeros(1)
+        self._sin_cached = torch.zeros(1)
 
     def rotate_half(
         self,
@@ -214,14 +213,12 @@ class RotaryEmbedding(BaseModule[Float[torch.Tensor, "..."]]):
         """
         seq_len = x.shape[seq_dimension]
 
-        if seq_len != self._seq_len_cached or self._cos_cached.device != x.device:
-            self._seq_len_cached = seq_len
-            t = torch.arange(seq_len, device=x.device).type_as(self.inv_freq)
-            freqs = torch.einsum("i,j->ij", t, self.inv_freq)
-            emb = torch.cat((freqs, freqs), dim=-1).to(x.device)
+        t = torch.arange(seq_len, device=x.device).type_as(self.inv_freq)
+        freqs = torch.einsum("i,j->ij", t, self.inv_freq)
+        emb = torch.cat((freqs, freqs), dim=-1).to(x.device)
 
-            self._cos_cached = emb.cos()
-            self._sin_cached = emb.sin()
+        self._cos_cached = emb.cos()
+        self._sin_cached = emb.sin()
 
         return self._cos_cached, self._sin_cached
 

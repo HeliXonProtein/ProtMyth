@@ -8,7 +8,7 @@ import torch
 from jaxtyping import Float, Bool
 from typing import List
 
-from protmyth.modules.common.attentions import Attention
+from protmyth.modules.common.attentions import Attention, RotaryEmbedding
 
 
 @pytest.mark.parametrize(
@@ -81,3 +81,20 @@ def test_attention(
 
     # Assert the shape of the output
     assert output.shape == expected_shape, f"Expected shape {expected_shape}, but got {output.shape}"
+
+    # test RoPE
+    RoPE = RotaryEmbedding(dim=c)
+
+    # Generate random data for queries, keys
+    # Note! We have split q_data, and kv_data into multiple heads
+    q4rope: Float[torch.Tensor, "batch_dims q_len n_head c"] = torch.randn(*batch_dims, q_len, n_head, c, device=device)
+    k4rope: Float[torch.Tensor, "batch_dims kv_len n_head c"] = torch.randn(*batch_dims, kv_len, n_head, c,
+                                                                            device=device)
+
+    # Perform the forward pass and capture the output
+    rope_q, _ = RoPE.forward(q4rope, k4rope)
+
+    expected_shape_q = (*batch_dims, q_len, n_head, c)
+
+    # # Assert the shape of the output
+    assert rope_q.shape == expected_shape_q, f"Expected shape {expected_shape_q}, but got {rope_q.shape}"
