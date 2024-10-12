@@ -21,7 +21,7 @@ from protmyth.modules.auxilary.losses import RobertaLMHead, ContactPredictionHea
         (
             1, 1,
             torch.tensor([0, 1, 2, 3, 4, 5, 6]),
-            torch.tensor([0, 1, 2, 3, 4, 5, 6])，
+            torch.tensor([0, 1, 2, 3, 4, 5, 6]),
             torch.tensor([0, 1, 2, 3, 4, 5, 6])
         ),
         # Add more test cases as needed
@@ -63,6 +63,7 @@ def test_RobertaLMHead(
 
 
 
+
 @pytest.mark.parametrize(
     "in_features, prepend_bos, append_eos, bias, eos_idx, tokens, attentions, expected_output",
     [
@@ -76,7 +77,7 @@ def test_RobertaLMHead(
         # Add more test cases as needed
     ]
 )
-def ContactPredictionHead(
+def test_ContactPredictionHead(
     in_features: int,
     prepend_bos: int,
     append_eos: bool,

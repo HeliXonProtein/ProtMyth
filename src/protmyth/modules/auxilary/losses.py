@@ -165,6 +165,7 @@ def symmetrize(
     return x + x.transpose(-1, -2)
 
 
+@register_module("losses")
 class ContactPredictionHead(nn.Module):
     """Performs symmetrization, apc, and computes a logistic regression on the output features"""
 
