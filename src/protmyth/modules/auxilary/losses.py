@@ -14,7 +14,7 @@ import losses.utils as utils
 
 import math
 from jaxtyping import Float
-from typing import Optional
+from typing import Optional, Union
 # import torchviz
 # from graphviz import Digraph
 # import einops
@@ -45,7 +45,7 @@ class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
             gt_esm: Float[torch.Tensor, "... Z #z_dim"],
             esm_bert_mask: Float[torch.Tensor, "... Z #z_dim"],
             get_embeds: bool = False,
-    ) -> float:
+    ) -> Union[float, Float[torch.Tensor, "... Z #z_dim"]]:
         with torch.no_grad():
             gt_esm = gt_esm.long()
             gt_esm = torch.where(esm_bert_mask == 1, gt_esm, (torch.ones_like(gt_esm) * (-100)).type_as(gt_esm))
@@ -120,7 +120,7 @@ class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
             gt_msa: Float[torch.Tensor, "... Z #z_dim"],
             bert_mask: Float[torch.Tensor, "... Z #z_dim"],
             get_embeds: bool = False,
-    ) -> float:
+    ) -> Union[float, Float[torch.Tensor, "... Z #z_dim"]]:
         """
 
         :param msa_embedding: torch.float32: [batch_size, num_clusters, L, 23]
@@ -181,7 +181,7 @@ class ContactPredictionHead(nn.Module):
         bias: bool = True,
         eos_idx: Optional[int] = None,
     ) -> None:
-        super(ContactPredictionHead).__init__()
+        super(ContactPredictionHead, self).__init__()
         self.in_features = in_features
         self.prepend_bos = prepend_bos
         self.append_eos = append_eos
