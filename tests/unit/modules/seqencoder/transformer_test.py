@@ -90,35 +90,6 @@ def test_transformer_layer_forward_with_rope(transformer_with_rope: TransformerL
     assert output.shape == (batch_size, seq_len, embed_dim), "Output shape mismatch."
 
 
-def test_rope_changes_query_key(transformer_with_rope: TransformerLayer) -> None:
-    """Test that RoPE modifies query and key tensors.
-
-    Parameters
-    ----------
-    transformer_with_rope : TransformerLayer
-        TransformerLayer instance with RoPE.
-
-    Asserts
-    -------
-    AssertionError
-        If RoPE doesn't modify query and key tensors.
-    """
-    batch_size, seq_len, embed_dim = 8, 16, 128
-    x = torch.randn(batch_size, seq_len, embed_dim)
-
-    # Apply RoPE
-    transformer = transformer_with_rope
-    q_rot, k_rot = transformer._apply_rope_to_qk(x, x)
-
-    # Assert the shapes of modified queries and keys
-    assert q_rot.shape == (batch_size, seq_len, embed_dim), "RoPE Q shape mismatch."
-    assert k_rot.shape == (batch_size, seq_len, embed_dim), "RoPE K shape mismatch."
-
-    # Ensure that RoPE modifies the tensors
-    assert not torch.allclose(q_rot, x), "RoPE did not modify query."
-    assert not torch.allclose(k_rot, x), "RoPE did not modify key."
-
-
 def test_attention_with_mask(transformer_without_rope: TransformerLayer) -> None:
     """Test that attention with mask is applied correctly.
 

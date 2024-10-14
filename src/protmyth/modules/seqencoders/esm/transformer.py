@@ -3,16 +3,14 @@
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
-from typing import Optional, Tuple
+from typing import Optional
 import torch
 from torch import nn
-import einops
 from jaxtyping import Float, Bool
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 from protmyth.modules.seqencoders.esm.bertnorm import ESM1LayerNorm, ESM1bLayerNorm
 from protmyth.modules.common.attentions import Attention
-from protmyth.modules.common.rotary_embedding import RotaryEmbedding  # Import the new RoPE class
 
 
 @register_module("seqencoders")
@@ -52,7 +50,6 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         self.embed_dim = embed_dim
         self.ffn_embed_dim = ffn_embed_dim
         self.attention_heads = attention_heads
-        self.use_rotary_embeddings = use_rotary_embeddings
 
         # Initialize Attention module
         self.attention = Attention(
@@ -62,15 +59,13 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
             n_head=attention_heads,
             out_dim=embed_dim,
             use_bias=add_bias_kv,
-            gating=gating
+            gating=gating,
+            use_rotary_embeddings=use_rotary_embeddings,
         )
 
         # Layer normalization
         self._init_submodules(use_esm1b_layer_norm)
 
-        # Rotary Positional Encoding (RoPE) initialization
-        if self.use_rotary_embeddings:
-            self.rope = RotaryEmbedding(self.embed_dim // self.attention_heads)
 
     def _init_submodules(self, use_esm1b_layer_norm: bool) -> None:
         """Initialize submodules including layer normalization and FFN."""
@@ -82,36 +77,44 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         self.final_layer_norm = BertLayerNorm(self.embed_dim)
 
     def forward(
-        self,
-        x: Float[torch.Tensor, "batch seq_len embed_dim"],
-        positions: Float[torch.Tensor, "batch seq_len position_dim"],
-        self_attn_mask: Optional[Bool[torch.Tensor, "batch seq_len seq_len"]] = None,
-        self_attn_padding_mask: Optional[Bool[torch.Tensor, "batch seq_len"]] = None,
+            self,
+            x: Float[torch.Tensor, "batch seq_len embed_dim"],
+            self_attn_mask: Optional[Bool[torch.Tensor, "batch seq_len seq_len"]] = None,
+            self_attn_padding_mask: Optional[Bool[torch.Tensor, "batch seq_len"]] = None,
     ) -> Float[torch.Tensor, "batch seq_len embed_dim"]:
-        """Forward pass through the Transformer layer with optional RoPE.
+        """
+        Perform a forward pass through the Transformer layer, optionally using Rotary Position Encoding (RoPE).
+
         Parameters
         ----------
-        **kwargs : Any
-            Keyword arguments. Accepts:
-                x : torch.Tensor
-                    Input tensor of shape (batch, seq_len, embed_dim).
-                self_attn_mask : Optional[torch.Tensor], optional
-                    Attention mask tensor of shape (batch, seq_len, seq_len). Default is None.
+        x : Float[torch.Tensor, "batch seq_len embed_dim"]
+            The input tensor with shape (batch, seq_len, embed_dim), representing the batch of sequences.
+        self_attn_mask : Optional[Bool[torch.Tensor, "batch seq_len seq_len"]], optional
+            An optional attention mask tensor with shape (batch, seq_len, seq_len).
+            This mask is used to prevent attention to certain positions. Default is None.
+        self_attn_padding_mask : Optional[Bool[torch.Tensor, "batch seq_len"]], optional
+            An optional padding mask tensor with shape (batch, seq_len).
+            This mask indicates which positions are padding and should be ignored in attention. Default is None.
 
         Returns
         -------
-        torch.Tensor
-            Output tensor of shape (batch, seq_len, embed_dim).
+        Float[torch.Tensor, "batch seq_len embed_dim"]
+            The output tensor with shape (batch, seq_len, embed_dim),
+            representing the transformed sequences after passing through the layer.
         """
         residual = x
         x = self.self_attn_layer_norm(x)
 
-        if self.use_rotary_embeddings:
-            # Apply RoPE to queries and keys using the updated RoPE mechanism
-            q, k = self._apply_rope_to_qk(x, x)
-            x = self.attention(q_data=q, kv_data=k, attn_mask=self_attn_mask)
+        if self_attn_mask is not None and self_attn_padding_mask is not None:
+            attn_mask = self_attn_mask * self_attn_padding_mask.unsqueeze(-2)
+        elif self_attn_mask is not None:
+            attn_mask = self_attn_mask
+        elif self_attn_padding_mask is not None:
+            attn_mask = self_attn_padding_mask.unsqueeze(-2)
         else:
-            x = self.attention(q_data=x, kv_data=x, attn_mask=self_attn_mask)
+            attn_mask = None
+
+        x = self.attention(q_data=x, kv_data=x, attn_mask=attn_mask)
 
         # Add residual connection
         x = residual + x
@@ -125,36 +128,3 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
 
         return x
 
-    def _apply_rope_to_qk(
-        self,
-        q: Float[torch.Tensor, "batch seq_len embed_dim"],
-        k: Float[torch.Tensor, "batch seq_len embed_dim"]
-    ) -> Tuple[Float[torch.Tensor, "batch seq_len embed_dim"], Float[torch.Tensor, "batch seq_len embed_dim"]]:
-        """Apply RoPE (Rotary Position Embedding) to the query and key tensors using the new RotaryEmbedding.
-
-        Parameters
-        ----------
-        q : torch.Tensor
-            Query tensor of shape (batch, seq_len, embed_dim).
-        k : torch.Tensor
-            Key tensor of shape (batch, seq_len, embed_dim).
-
-        Returns
-        -------
-        q_rot : torch.Tensor
-            Rotated query tensor of shape (batch, seq_len, embed_dim).
-        k_rot : torch.Tensor
-            Rotated key tensor of shape (batch, seq_len, embed_dim).
-        """
-        # Reshape to [..., sequence_length, n_head, c]
-        q_reshaped = einops.rearrange(q, 'b n (h d) -> b n h d', h=self.attention_heads)
-        k_reshaped = einops.rearrange(k, 'b n (h d) -> b n h d', h=self.attention_heads)
-
-        # Apply RoPE to queries and keys
-        q_rope, k_rope = self.rope(q_reshaped, k_reshaped)
-
-        # Rearrange back to original shape (batch, seq_len, embed_dim)
-        q_rot = einops.rearrange(q_rope, 'b n h d -> b n (h d)')
-        k_rot = einops.rearrange(k_rope, 'b n h d -> b n (h d)')
-
-        return q_rot, k_rot
