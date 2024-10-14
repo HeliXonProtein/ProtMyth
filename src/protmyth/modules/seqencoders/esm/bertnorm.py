@@ -3,13 +3,23 @@
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
+"""This module contains implementations of ESM1 and ESM1b layer normalization
+for the ProtMyth framework.
+
+Layer normalization is a technique to normalize the inputs across the features
+for each example in a batch, which helps stabilize and accelerate training.
+
+Classes:
+    - ESM1LayerNorm: Implements layer normalization for the ESM1 model.
+    - ESM1bLayerNorm: Implements layer normalization for the ESM1b model.
+"""
+
 import torch
 from torch import nn
-from graphviz import Digraph
 from jaxtyping import Float
 from protmyth.modules.base import BaseModule
 from typing import Sequence
-import torchviz
+from typing import Optional
 
 
 class ESM1LayerNorm(BaseModule):
@@ -35,13 +45,14 @@ class ESM1LayerNorm(BaseModule):
             self.weight = nn.Parameter(torch.ones(self.hidden_size))
             self.bias = nn.Parameter(torch.zeros(self.hidden_size))
 
-    def forward(self, x: Float[torch.Tensor, "batch ..."]) -> Float[torch.Tensor, "batch ..."]:
+    def forward(self, *args: Float[torch.Tensor, "batch ..."], **kwargs) -> Float[torch.Tensor, "batch ..."]:
         """Perform forward pass of the layer normalization.
 
         Parameters
         ----------
-        x : torch.Tensor
+        args : torch.Tensor
             Input tensor of shape (batch_size, ... , hidden_size).
+        **kwargs: Additional keyword arguments.
 
         Returns
         -------
@@ -49,6 +60,7 @@ class ESM1LayerNorm(BaseModule):
             Normalized output tensor.
         """
         # Compute mean and variance across specified dimensions
+        x = args[0]
         dims = tuple(-(i + 1) for i in range(len(self.hidden_size)))
         means = x.mean(dims, keepdim=True)
         x_zeromean = x - means
@@ -58,25 +70,6 @@ class ESM1LayerNorm(BaseModule):
         if self.affine:
             x = (self.weight * x) + self.bias
         return x
-
-    def make_graph(self, batch_dims: Sequence[int], device: torch.device) -> Digraph:
-        """Create a graph representation of the layer norm operation.
-
-        Parameters
-        ----------
-        batch_dims : Sequence[int]
-            Dimensions of the batch.
-        device : torch.device
-            The device on which the tensor is located.
-
-        Returns
-        -------
-        Digraph
-            A graph representing the forward pass.
-        """
-        x_data = torch.randn(list(batch_dims) + list(self.hidden_size), device=device)
-        output = self.forward(x_data)
-        return torchviz.make_dot(output.mean(), params=dict(self.named_parameters()))
 
 
 class ESM1bLayerNorm(BaseModule):
@@ -98,19 +91,21 @@ class ESM1bLayerNorm(BaseModule):
         self.eps = eps
         self.affine = bool(affine)
 
+        self.weight: Optional[nn.Parameter] = None
+        self.bias: Optional[nn.Parameter] = None
+
         if self.affine:
             self.weight = nn.Parameter(torch.ones(self.hidden_size))
             self.bias = nn.Parameter(torch.zeros(self.hidden_size))
-        else:
-            self.weight, self.bias = None, None
 
-    def forward(self, x: Float[torch.Tensor, "batch ..."]) -> Float[torch.Tensor, "batch ..."]:
+    def forward(self, *args: Float[torch.Tensor, "batch ..."], **kwargs) -> Float[torch.Tensor, "batch ..."]:
         """Perform forward pass of the layer normalization.
 
         Parameters
         ----------
-        x : torch.Tensor
+        args : torch.Tensor
             Input tensor of shape (batch_size, ... , hidden_size).
+        **kwargs: Additional keyword arguments.
 
         Returns
         -------
@@ -118,6 +113,7 @@ class ESM1bLayerNorm(BaseModule):
             Normalized output tensor.
         """
         # Compute mean and variance across specified dimensions
+        x = args[0]
         dims = tuple(-(i + 1) for i in range(len(self.hidden_size)))
         means = x.mean(dims, keepdim=True)
         x_zeromean = x - means
@@ -127,22 +123,3 @@ class ESM1bLayerNorm(BaseModule):
         if self.affine:
             x = (self.weight * x) + self.bias
         return x
-
-    def make_graph(self, batch_dims: Sequence[int], device: torch.device) -> Digraph:
-        """Create a graph representation of the layer norm operation.
-
-        Parameters
-        ----------
-        batch_dims : Sequence[int]
-            Dimensions of the batch.
-        device : torch.device
-            The device on which the tensor is located.
-
-        Returns
-        -------
-        Digraph
-            A graph representing the forward pass.
-        """
-        x_data = torch.randn(list(batch_dims) + list(self.hidden_size), device=device)
-        output = self.forward(x_data)
-        return torchviz.make_dot(output.mean(), params=dict(self.named_parameters()))
