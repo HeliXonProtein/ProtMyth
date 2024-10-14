@@ -43,11 +43,11 @@ class Attention(BaseModule[Float[torch.Tensor, "..."]]):
 
     def __init__(
         self,
-        q_dim: int = 32,
-        kv_dim: int = 32,
-        c: int = 8,
-        n_head: int = 4,
-        out_dim: int = 32,
+        q_dim,
+        kv_dim,
+        c,
+        n_head,
+        out_dim,
         use_bias: bool = False,
         gating: bool = True,
         use_rotary_embeddings: bool = False,
@@ -214,7 +214,7 @@ class RotaryEmbedding(nn.Module):
         """
         seq_len = x.shape[seq_dimension]
 
-        t = torch.arange(seq_len, device=x.device).type_as(self.inv_freq)
+        t = torch.arange(seq_len, device=x.device, dtype=x.dtype)
         freqs = torch.einsum("i,j->ij", t, self.inv_freq)
         emb = torch.cat((freqs, freqs), dim=-1).to(x.device)
 
