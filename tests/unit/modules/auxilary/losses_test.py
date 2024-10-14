@@ -8,7 +8,6 @@
 
 import pytest
 import torch
-from typing import Union
 from jaxtyping import Float
 from typing import Optional
 from protmyth.modules.auxilary.losses import RobertaLMHead, ContactPredictionHead  # Adjust the import path as necessary
@@ -62,8 +61,6 @@ def test_RobertaLMHead(
     assert torch.equal(output, expected_output), f"Expected output {expected_output}, but got {output}"
 
 
-
-
 @pytest.mark.parametrize(
     "in_features, prepend_bos, append_eos, bias, eos_idx, tokens, attentions, expected_output",
     [
@@ -83,9 +80,9 @@ def test_ContactPredictionHead(
     append_eos: bool,
     bias: bool,
     eos_idx: Optional[int] = None,
-    tokens: Float[torch.Tensor, "..."]=None,
-    attentions: Float[torch.Tensor, "..."]=None,
-    expected_output: Float[torch.Tensor, "...Z w_dim"]=None
+    tokens: Float[torch.Tensor, "..."] = None,
+    attentions: Float[torch.Tensor, "..."] = None,
+    expected_output: Float[torch.Tensor, "...Z w_dim"] = None
 ) -> None:
     """
     Test the ContactPredictionHead module with various configurations.

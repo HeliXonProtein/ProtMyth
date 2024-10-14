@@ -13,12 +13,12 @@ import torch.nn.functional as F
 import losses.utils as utils
 
 import math
-from jaxtyping import Float, Bool
+from jaxtyping import Float
 from typing import Optional
-import torchviz
-from graphviz import Digraph
-import einops
-from collections.abc import Sequence
+# import torchviz
+# from graphviz import Digraph
+# import einops
+# from collections.abc import Sequence
 
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
@@ -30,8 +30,8 @@ class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
 
     def __init__(
             self,
-            in_features: int=1280,
-            out_features: int=33,
+            in_features: int = 1280,
+            out_features: int = 33,
     ) -> None:
         super(BertHead, self).__init__()
         self.linear1 = nn.Linear(in_features, in_features)
@@ -40,11 +40,11 @@ class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
         self.loss_fn = nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
 
     def forward(
-            self, 
-            esm_embedding: Float[torch.Tensor, "... Z z_dim"], 
-            gt_esm: Float[torch.Tensor, "... Z #z_dim"], 
+            self,
+            esm_embedding: Float[torch.Tensor, "... Z z_dim"],
+            gt_esm: Float[torch.Tensor, "... Z #z_dim"],
             esm_bert_mask: Float[torch.Tensor, "... Z #z_dim"],
-            get_embeds: bool=False,
+            get_embeds: bool = False,
     ) -> float:
         with torch.no_grad():
             gt_esm = gt_esm.long()
@@ -53,7 +53,9 @@ class BertHead(BaseModule[Float[torch.Tensor, "..."]]):
         logits = nn.GELU(self.linear1(esm_embedding))
         logits = self.layer_norm(logits)
         logits = self.linear2(logits)
-        loss = self.loss_fn(logits.permute(0, 3, 1, 2).contiguous(), gt_esm) # nn.CrossEntropyLoss assumes the logits at dim 1
+        # nn.CrossEntropyLoss assumes the logits at dim 1
+        logits = logits.permute(0, 3, 1, 2).contiguous()
+        loss = self.loss_fn(logits, gt_esm)
         loss = utils.mask_mean(value=loss, mask=esm_bert_mask, dim=[-1, -2])
 
         if get_embeds:
@@ -68,10 +70,10 @@ class RobertaLMHead(BaseModule[Float[torch.Tensor, "..."]]):
     """Head for masked language modeling."""
 
     def __init__(
-            self, 
-            embed_dim: int=1280,
-            output_dim: int=33,
-            weight: Float[torch.Tensor, "..."]=None
+            self,
+            embed_dim: int = 1280,
+            output_dim: int = 33,
+            weight: Float[torch.Tensor, "..."] = None
         ) -> None:
         super(RobertaLMHead, self).__init__()
         self.dense = nn.Linear(embed_dim, embed_dim)
@@ -80,7 +82,7 @@ class RobertaLMHead(BaseModule[Float[torch.Tensor, "..."]]):
         self.bias = nn.Parameter(torch.zeros(output_dim))
 
     def forward(
-            self, 
+            self,
             features: Float[torch.Tensor, "...Z f_dim"]
         ) -> Float[torch.Tensor, "... Z w_dim"]:
         x = self.dense(features)
@@ -105,19 +107,19 @@ def gelu(x):
 class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
     def __init__(
             self,
-            in_features: int=256,
-            out_features: int=23,
+            in_features: int = 256,
+            out_features: int = 23,
     ) -> None:
         super(MSAMaskPredictHead, self).__init__()
         self.proj = nn.Linear(in_features, out_features, initializer='zeros')
         self.loss_fn = nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
 
     def forward(
-            self, 
-            esm_embedding: Float[torch.Tensor, "... Z z_dim"], 
-            gt_esm: Float[torch.Tensor, "... Z #z_dim"], 
+            self,
+            msa_embedding: Float[torch.Tensor, "... Z z_dim"],
+            gt_msa: Float[torch.Tensor, "... Z #z_dim"],
             bert_mask: Float[torch.Tensor, "... Z #z_dim"],
-            get_embeds: bool=False,
+            get_embeds: bool = False,
     ) -> float:
         """
 
@@ -128,13 +130,15 @@ class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
         """
         with torch.no_grad():
             gt_msa = gt_msa.long()
-            gt_msa = torch.where(bert_mask == 1, gt_msa, (torch.ones_like(gt_msa) * (-100)).type_as(gt_msa)) # masked gt
+            gt_msa = torch.where(bert_mask == 1, gt_msa, (torch.ones_like(gt_msa) * (-100)).type_as(gt_msa))
 
         # to reduce templates from msa
         msa_embedding = msa_embedding[:, :gt_msa.shape[1]]
 
         logits = self.proj(msa_embedding)
-        loss = self.loss_fn(logits.permute(0, 3, 1, 2).contiguous(), gt_msa) # nn.CrossEntropyLoss assumes the logits at dim 1
+        # nn.CrossEntropyLoss assumes the logits at dim 1
+        logits = logits.permute(0, 3, 1, 2).contiguous()
+        loss = self.loss_fn(logits, gt_msa)
         loss = utils.mask_mean(value=loss, mask=bert_mask, dim=[-1, -2])
 
         if get_embeds:
@@ -145,8 +149,8 @@ class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
 
 
 def apc(
-    x:  Float[torch.Tensor, "..."]
-    ) ->  Float[torch.Tensor, "..."]:
+    x: Float[torch.Tensor, "..."]
+    ) -> Float[torch.Tensor, "..."]:
     "Perform average product correct, used for contact prediction."
     a1 = x.sum(-1, keepdims=True)
     a2 = x.sum(-2, keepdims=True)
@@ -174,7 +178,7 @@ class ContactPredictionHead(nn.Module):
         in_features: int,
         prepend_bos: bool,
         append_eos: bool,
-        bias=True,
+        bias: bool = True,
         eos_idx: Optional[int] = None,
     ) -> None:
         super(ContactPredictionHead).__init__()
