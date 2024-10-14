@@ -34,8 +34,6 @@ class ESM1LayerNorm(BaseModule):
         if self.affine:
             self.weight = nn.Parameter(torch.ones(self.hidden_size))
             self.bias = nn.Parameter(torch.zeros(self.hidden_size))
-        else:
-            self.weight, self.bias = None, None
 
     def forward(self, x: Float[torch.Tensor, "batch ..."]) -> Float[torch.Tensor, "batch ..."]:
         """Perform forward pass of the layer normalization.
