@@ -3,25 +3,24 @@
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
-"""Common layers test
+"""losses test
 """
 
 import pytest
 import torch
 from jaxtyping import Float
-from typing import Optional
 from protmyth.modules.auxilary.losses import RobertaLMHead, ContactPredictionHead  # Adjust the import path as necessary
 
 
 @pytest.mark.parametrize(
-    "embed_dim, output_dim, weight, features, expected_output",
+    "weight, embed_dim, output_dim, features, expected_output",
     [
         # Test case 1: basic dim=1 test
         (
+            torch.tensor([[0.0]]),
             1, 1,
-            torch.tensor([0, 1, 2, 3, 4, 5, 6]),
-            torch.tensor([0, 1, 2, 3, 4, 5, 6]),
-            torch.tensor([0, 1, 2, 3, 4, 5, 6])
+            torch.tensor([0.0]),
+            torch.tensor([0.0])
         ),
         # Add more test cases as needed
     ]
@@ -29,25 +28,27 @@ from protmyth.modules.auxilary.losses import RobertaLMHead, ContactPredictionHea
 def test_RobertaLMHead(
     embed_dim: int,
     output_dim: int,
-    weight: Float[torch.Tensor, "...Z w_dim"],
-    features: Float[torch.Tensor, "...Z f_dim"],
-    expected_output: Float[torch.Tensor, "...Z w_dim"]
+    weight: Float[torch.Tensor, "..."],
+    features: Float[torch.Tensor, "..."],
+    expected_output: Float[torch.Tensor, "..."]
 ) -> None:
-    """
-    Test the RobertaLMHead module with various configurations.
+    """Test the RobertaLMHead module with various configurations.
 
     Parameters
     ----------
-    expected_output : torch.Tensor
-        The expected output tensor.
+    embed_dim: int,
+    output_dim: int,
+    weight: Float[torch.Tensor, "..."],
+    features: Float[torch.Tensor, "..."],
+    expected_output: Float[torch.Tensor, "..."]
     """
     device = torch.device('cpu')
 
     # Initialize the RobertaLMHead module
     module = RobertaLMHead(
+        weight=weight,
         embed_dim=embed_dim,
         output_dim=output_dim,
-        weight=weight
     )
 
     # Move inputs to the correct device
@@ -66,31 +67,36 @@ def test_RobertaLMHead(
     [
         # Test case 1: basic dim=1 test
         (
-            1, True, True, True, None,
-            torch.tensor([0, 1, 2, 3, 4, 5, 6]),
-            torch.tensor([0, 1, 2, 3, 4, 5, 6]),
-            torch.tensor([0, 1, 2, 3, 4, 5, 6])
+            1, False, False, False, 0,
+            torch.tensor([2.0]),
+            torch.tensor([[[[[1.0]]]]]),
+            torch.tensor([[[0.5]]])
         ),
         # Add more test cases as needed
     ]
 )
 def test_ContactPredictionHead(
     in_features: int,
-    prepend_bos: int,
+    prepend_bos: bool,
     append_eos: bool,
     bias: bool,
-    eos_idx: Optional[int] = None,
-    tokens: Float[torch.Tensor, "..."] = None,
-    attentions: Float[torch.Tensor, "..."] = None,
-    expected_output: Float[torch.Tensor, "...Z w_dim"] = None
+    eos_idx: int,
+    tokens: Float[torch.Tensor, "..."],
+    attentions: Float[torch.Tensor, "..."],
+    expected_output: Float[torch.Tensor, "..."]
 ) -> None:
-    """
-    Test the ContactPredictionHead module with various configurations.
+    """Test the ContactPredictionHead module with various configurations.
 
     Parameters
     ----------
-    expected_output : torch.Tensor
-        The expected output tensor.
+    in_features: int,
+    prepend_bos: int,
+    append_eos: bool,
+    bias: bool,
+    eos_idx: Optional[int],
+    tokens: Float[torch.Tensor, "..."],
+    attentions: Float[torch.Tensor, "..."],
+    expected_output: Float[torch.Tensor, "..."]
     """
     device = torch.device('cpu')
 

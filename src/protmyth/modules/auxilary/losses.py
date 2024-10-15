@@ -12,7 +12,6 @@ import torch.nn.functional as F
 
 import math
 from jaxtyping import Float
-from typing import Optional
 
 from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
@@ -24,11 +23,11 @@ class RobertaLMHead(BaseModule[Float[torch.Tensor, "..."]]):
 
     def __init__(
             self,
+            weight: Float[torch.Tensor, "..."],
             embed_dim: int = 1280,
             output_dim: int = 33,
-            weight: Float[torch.Tensor, "..."] = None
             ) -> None:
-        super(RobertaLMHead, self).__init__()
+        super().__init__()
         self.dense = nn.Linear(embed_dim, embed_dim)
         self.layer_norm = torch.nn.LayerNorm(embed_dim)
         self.weight = weight
@@ -36,8 +35,20 @@ class RobertaLMHead(BaseModule[Float[torch.Tensor, "..."]]):
 
     def forward(
             self,
-            features: Float[torch.Tensor, "...Z f_dim"]
-            ) -> Float[torch.Tensor, "... Z w_dim"]:
+            features: Float[torch.Tensor, "..."]
+            ) -> Float[torch.Tensor, "..."]:
+        """Implementation of the forward function.
+
+        Parameters
+        ----------
+        features: Float[torch.Tensor, "..."]
+            A tensor containing the features.
+
+        Returns
+        -------
+        torch.Tensor
+            A tensor after robertahead
+        """
         x = self.dense(features)
         x = gelu(x)
         x = self.layer_norm(x)
@@ -46,23 +57,46 @@ class RobertaLMHead(BaseModule[Float[torch.Tensor, "..."]]):
         return x
 
 
-def gelu(x):
+def gelu(
+        x: torch.Tensor
+        ) -> torch.Tensor:
     """Implementation of the gelu activation function.
 
     For information: OpenAI GPT's gelu is slightly different
     (and gives slightly different results):
     0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
+
+    Parameters
+    ----------
+    x: Float[torch.Tensor, "...Z f_dim"]
+        A tensor containing the features.
+
+    Returns
+    -------
+    torch.Tensor
+        A tensor after gelu
     """
     return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
 
 
 def apc(
-        x: Float[torch.Tensor, "..."]
-        ) -> Float[torch.Tensor, "..."]:
-    "Perform average product correct, used for contact prediction."
-    a1 = x.sum(-1, keepdims=True)
-    a2 = x.sum(-2, keepdims=True)
-    a12 = x.sum((-1, -2), keepdims=True)
+    x: torch.Tensor,
+) -> torch.Tensor:
+    """Perform average product correction, used for contact prediction.
+
+    Parameters
+    ----------
+    x: Float[torch.Tensor, "...Z f_dim"]
+        A tensor containing the features.
+
+    Returns
+    -------
+    torch.Tensor
+        A tensor after apc
+    """
+    a1 = torch.sum(x, -1, keepdim=True)
+    a2 = torch.sum(x, -2, keepdim=True)
+    a12 = torch.sum(x, (-1, -2), keepdim=True)
 
     avg = a1 * a2
     avg.div_(a12)  # in-place to reduce memory
@@ -73,7 +107,18 @@ def apc(
 def symmetrize(
         x: Float[torch.Tensor, "..."]
         ) -> Float[torch.Tensor, "..."]:
-    "Make layer symmetric in final two dimensions, used for contact prediction."
+    """Make layer symmetric in final two dimensions, used for contact prediction.
+
+    Parameters
+    ----------
+    x: Float[torch.Tensor, "...Z f_dim"]
+        A tensor containing the features.
+
+    Returns
+    -------
+    torch.Tensor
+        A tensor after symmetrize
+    """
     return x + x.transpose(-1, -2)
 
 
@@ -86,10 +131,10 @@ class ContactPredictionHead(nn.Module):
             in_features: int,
             prepend_bos: bool,
             append_eos: bool,
-            bias: bool = True,
-            eos_idx: Optional[int] = None,
+            bias: bool,
+            eos_idx: int,
             ) -> None:
-        super(ContactPredictionHead, self).__init__()
+        super().__init__()
         self.in_features = in_features
         self.prepend_bos = prepend_bos
         self.append_eos = append_eos
@@ -104,6 +149,19 @@ class ContactPredictionHead(nn.Module):
             tokens: Float[torch.Tensor, "..."],
             attentions: Float[torch.Tensor, "..."]
             ) -> Float[torch.Tensor, "..."]:
+        """Implementation of the forward function.
+        Parameters
+        ----------
+        tokens: Float[torch.Tensor, "...Z f_dim"]
+            token containing the features.
+        attentions: Float[torch.Tensor, "...Z f_dim"]
+            attentions containing the weights.
+
+        Returns
+        -------
+        torch.Tensor
+            A tensor after ContactPredictionHead
+        """
         # remove eos token attentions
         if self.append_eos:
             eos_mask = tokens.ne(self.eos_idx).to(attentions)
