@@ -18,11 +18,10 @@ import torch
 from torch import nn
 from jaxtyping import Float
 from protmyth.modules.base import BaseModule
-from typing import Sequence
-from typing import Optional
+from typing import Sequence, Optional
 
 
-class ESM1LayerNorm(BaseModule):
+class ESM1LayerNorm(BaseModule[Float[torch.Tensor, "batch ..."]]):
     """Layer normalization for ESM1 model.
 
     Parameters
@@ -45,22 +44,22 @@ class ESM1LayerNorm(BaseModule):
             self.weight = nn.Parameter(torch.ones(self.hidden_size))
             self.bias = nn.Parameter(torch.zeros(self.hidden_size))
 
-    def forward(self, *args: Float[torch.Tensor, "batch ..."], **kwargs) -> Float[torch.Tensor, "batch ..."]:
+    def forward(self,
+                x: Float[torch.Tensor, "batch ..."],
+                ) -> Float[torch.Tensor, "batch ..."]:
         """Perform forward pass of the layer normalization.
 
         Parameters
         ----------
-        args : torch.Tensor
-            Input tensor of shape (batch_size, ... , hidden_size).
-        **kwargs: Additional keyword arguments.
+        x : torch.Tensor
+            Input tensor of shape (batch_size, ..., hidden_size).
 
         Returns
         -------
         torch.Tensor
-            Normalized output tensor.
+            Normalized output tensor with the same shape as the input.
         """
         # Compute mean and variance across specified dimensions
-        x = args[0]
         dims = tuple(-(i + 1) for i in range(len(self.hidden_size)))
         means = x.mean(dims, keepdim=True)
         x_zeromean = x - means
@@ -72,7 +71,7 @@ class ESM1LayerNorm(BaseModule):
         return x
 
 
-class ESM1bLayerNorm(BaseModule):
+class ESM1bLayerNorm(BaseModule[Float[torch.Tensor, "batch ..."]]):
     """Layer normalization for ESM1b model.
 
     Parameters
@@ -98,22 +97,22 @@ class ESM1bLayerNorm(BaseModule):
             self.weight = nn.Parameter(torch.ones(self.hidden_size))
             self.bias = nn.Parameter(torch.zeros(self.hidden_size))
 
-    def forward(self, *args: Float[torch.Tensor, "batch ..."], **kwargs) -> Float[torch.Tensor, "batch ..."]:
+    def forward(self,
+                x: Float[torch.Tensor, "batch ..."],
+                ) -> Float[torch.Tensor, "batch ..."]:
         """Perform forward pass of the layer normalization.
 
         Parameters
         ----------
-        args : torch.Tensor
-            Input tensor of shape (batch_size, ... , hidden_size).
-        **kwargs: Additional keyword arguments.
+        x : torch.Tensor
+            Input tensor of shape (batch_size, ..., hidden_size).
 
         Returns
         -------
         torch.Tensor
-            Normalized output tensor.
+            Normalized output tensor with the same shape as the input.
         """
         # Compute mean and variance across specified dimensions
-        x = args[0]
         dims = tuple(-(i + 1) for i in range(len(self.hidden_size)))
         means = x.mean(dims, keepdim=True)
         x_zeromean = x - means
