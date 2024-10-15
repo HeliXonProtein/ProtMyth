@@ -74,7 +74,7 @@ class RobertaLMHead(BaseModule[Float[torch.Tensor, "..."]]):
             embed_dim: int = 1280,
             output_dim: int = 33,
             weight: Float[torch.Tensor, "..."] = None
-        ) -> None:
+            ) -> None:
         super(RobertaLMHead, self).__init__()
         self.dense = nn.Linear(embed_dim, embed_dim)
         self.layer_norm = torch.nn.LayerNorm(embed_dim)
@@ -84,7 +84,7 @@ class RobertaLMHead(BaseModule[Float[torch.Tensor, "..."]]):
     def forward(
             self,
             features: Float[torch.Tensor, "...Z f_dim"]
-        ) -> Float[torch.Tensor, "... Z w_dim"]:
+            ) -> Float[torch.Tensor, "... Z w_dim"]:
         x = self.dense(features)
         x = gelu(x)
         x = self.layer_norm(x)
@@ -109,7 +109,7 @@ class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
             self,
             in_features: int = 256,
             out_features: int = 23,
-    ) -> None:
+            ) -> None:
         super(MSAMaskPredictHead, self).__init__()
         self.proj = nn.Linear(in_features, out_features, initializer='zeros')
         self.loss_fn = nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
@@ -149,8 +149,8 @@ class MSAMaskPredictHead(BaseModule[Float[torch.Tensor, "..."]]):
 
 
 def apc(
-    x: Float[torch.Tensor, "..."]
-    ) -> Float[torch.Tensor, "..."]:
+        x: Float[torch.Tensor, "..."]
+        ) -> Float[torch.Tensor, "..."]:
     "Perform average product correct, used for contact prediction."
     a1 = x.sum(-1, keepdims=True)
     a2 = x.sum(-2, keepdims=True)
@@ -164,7 +164,7 @@ def apc(
 
 def symmetrize(
         x: Float[torch.Tensor, "..."]
-    ) -> Float[torch.Tensor, "..."]:
+        ) -> Float[torch.Tensor, "..."]:
     "Make layer symmetric in final two dimensions, used for contact prediction."
     return x + x.transpose(-1, -2)
 
@@ -174,13 +174,13 @@ class ContactPredictionHead(nn.Module):
     """Performs symmetrization, apc, and computes a logistic regression on the output features"""
 
     def __init__(
-        self,
-        in_features: int,
-        prepend_bos: bool,
-        append_eos: bool,
-        bias: bool = True,
-        eos_idx: Optional[int] = None,
-    ) -> None:
+            self,
+            in_features: int,
+            prepend_bos: bool,
+            append_eos: bool,
+            bias: bool = True,
+            eos_idx: Optional[int] = None,
+            ) -> None:
         super(ContactPredictionHead, self).__init__()
         self.in_features = in_features
         self.prepend_bos = prepend_bos
@@ -195,7 +195,7 @@ class ContactPredictionHead(nn.Module):
             self,
             tokens: Float[torch.Tensor, "..."],
             attentions: Float[torch.Tensor, "..."]
-        ) -> Float[torch.Tensor, "..."]:
+            ) -> Float[torch.Tensor, "..."]:
         # remove eos token attentions
         if self.append_eos:
             eos_mask = tokens.ne(self.eos_idx).to(attentions)

@@ -2,7 +2,7 @@
 #
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
-
+'''
 """seq2node embeddings, this module contains all positional embeddings in 1 dimension
 SinusoidalPositionalEmbedding,
 LearnedPositionalEmbedding
@@ -252,3 +252,4 @@ class NodeEmbedder(BaseModule[Float[torch.Tensor, "..."]]):
         # If any reshaping or permuting is needed, use einops here
         # Example: node_embed = rearrange(node_embed, '... Q q_dim -> ... q_dim Q')
         return node_embed
+'''

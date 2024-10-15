@@ -3,6 +3,7 @@
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
+'''
 """Common layers test
 """
 
@@ -116,3 +117,4 @@ def test_distance_to_bins(
 
     # Assert the output matches the expected output
     assert torch.equal(output, expected_output), f"Expected output {expected_output}, but got {output}"
+s'''

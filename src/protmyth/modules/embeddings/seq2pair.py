@@ -3,7 +3,7 @@
 # This file is a part of ProtMyth and is released under the MIT License.
 # Thanks for using ProtMyth!
 
-
+'''
 """embeddings embeddings
 """
 
@@ -130,3 +130,4 @@ class PairEmbedder(BaseModule[Float[torch.Tensor, "..."]]):
         z = self.linear(z)
         z = self.dropout(z)
         return z
+'''
