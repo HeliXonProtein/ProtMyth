@@ -27,6 +27,8 @@ disable =
     # Algorithms and neural networks generally have a lot of variables
     too-many-instance-attributes,
     too-many-arguments,
+    # There is a bug on Jenkins. When we only use keyward arguments, it still has #R0917 problem
+    too-many-positional-arguments,
     too-many-locals,
     # Detection seems buggy or unhelpful
     duplicate-code,
