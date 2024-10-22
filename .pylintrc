@@ -8,7 +8,7 @@
 
 [MASTER]
 # Check docstring completeness
-load-plugins = 
+load-plugins =
     pylint.extensions.docparams,
     pylint.extensions.docstyle,
     pylint_junit

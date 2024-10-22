@@ -63,11 +63,10 @@ def test_transformer_layer(
 
     # Create input tensors
     x = torch.randn(batch_size, seq_len, embed_dim)
-    self_attn_mask = torch.randint(0, 2, (batch_size, seq_len, seq_len), dtype=torch.bool)
     self_attn_padding_mask = torch.randint(0, 2, (batch_size, seq_len), dtype=torch.bool)
 
     # Forward pass
-    output = layer(x, self_attn_mask, self_attn_padding_mask)
+    output = layer(x, self_attn_padding_mask)
 
     # Verify output shape
     assert output.shape == (batch_size, seq_len, embed_dim), f"Output shape mismatch: \
