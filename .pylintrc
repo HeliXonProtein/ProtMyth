@@ -27,6 +27,7 @@ disable =
     # Algorithms and neural networks generally have a lot of variables
     too-many-instance-attributes,
     too-many-arguments,
+    too-many-positional-arguments,
     too-many-locals,
     # Detection seems buggy or unhelpful
     duplicate-code,
