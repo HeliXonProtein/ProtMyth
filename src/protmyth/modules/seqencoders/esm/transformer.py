@@ -54,6 +54,7 @@ from protmyth.modules.base import BaseModule
 from protmyth.modules.register import register_module
 from protmyth.modules.seqencoders.esm.bertnorm import ESM1LayerNorm, ESM1bLayerNorm
 from protmyth.modules.common.attentions import Attention
+import einops
 
 
 @register_module("seqencoders")
@@ -139,7 +140,6 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
     def forward(
             self,
             x: Float[torch.Tensor, "batch seq_len embed_dim"],
-            self_attn_mask: Optional[Bool[torch.Tensor, "batch seq_len seq_len"]] = None,
             self_attn_padding_mask: Optional[Bool[torch.Tensor, "batch seq_len"]] = None,
     ) -> Float[torch.Tensor, "batch seq_len embed_dim"]:
         """Perform a forward pass through the Transformer layer, optionally using Rotary Position Encoding (RoPE).
@@ -148,9 +148,6 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         ----------
         x : Float[torch.Tensor, "batch seq_len embed_dim"]
             The input tensor with shape (batch, seq_len, embed_dim), representing the batch of sequences.
-        self_attn_mask : Optional[Bool[torch.Tensor, "batch seq_len seq_len"]], optional
-            An optional attention mask tensor with shape (batch, seq_len, seq_len).
-            This mask is used to prevent attention to certain positions. Default is None.
         self_attn_padding_mask : Optional[Bool[torch.Tensor, "batch seq_len"]], optional
             An optional padding mask tensor with shape (batch, seq_len).
             This mask indicates which positions are padding and should be ignored in attention. Default is None.
@@ -164,12 +161,8 @@ class TransformerLayer(BaseModule[Float[torch.Tensor, "..."]]):
         residual = x
         x = self.self_attn_layer_norm(x)
 
-        if self_attn_mask is not None and self_attn_padding_mask is not None:
-            attn_mask = self_attn_mask * self_attn_padding_mask.unsqueeze(-2)
-        elif self_attn_mask is not None:
-            attn_mask = self_attn_mask
-        elif self_attn_padding_mask is not None:
-            attn_mask = self_attn_padding_mask.unsqueeze(-2)
+        if self_attn_padding_mask is not None:
+            attn_mask = ~einops.rearrange(self_attn_padding_mask, 'b l -> b 1 l')
         else:
             attn_mask = None
 
