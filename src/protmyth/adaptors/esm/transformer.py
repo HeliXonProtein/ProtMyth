@@ -8,12 +8,13 @@
 
 import torch
 from protmyth.adaptors.mapper import ModuleMapper
-from protmyth.adaptors.common import linear_mapper
+from protmyth.adaptors.common import linear_mapper, layer_norm_mapper
+from protmyth.adaptors.esm.layers import attention_mapper
 from typing import Dict
 from jaxtyping import Float
 
 
-def attention_mapper(tgt_pfx: str = "", src_pfx: str = "") -> ModuleMapper:
+def transformer_mapper(tgt_pfx: str = "", src_pfx: str = "") -> ModuleMapper:
     """Creates a module mapper for transformer layers.
 
     Parameters
@@ -29,28 +30,11 @@ def attention_mapper(tgt_pfx: str = "", src_pfx: str = "") -> ModuleMapper:
         A configured ModuleMapper object for transformer layers.
     """
 
-    def _concat_kv_weights(to_concat_dict: Dict[str, Float[torch.Tensor, "..."]], _: torch.Tensor) -> torch.Tensor:
-        """Concatenates key-value weights along the first dimension.
-
-        Parameters
-        ----------
-        to_concat_dict : dict
-            Dictionary containing tensors to concatenate.
-        _ : torch.Tensor
-            Placeholder tensor, not used in the function.
-
-        Returns
-        -------
-        torch.Tensor
-            Concatenated tensor.
-        """
-        return torch.cat(list(to_concat_dict.values()), dim=0)
-
     return (
         ModuleMapper(tgt_pfx, src_pfx)
-        .add_submodule(linear_mapper("q_linear", "q_proj"))
-        .add_multimap("kv_linear.weight", ["k_proj.weight", "v_proj.weight"], _concat_kv_weights)
-        .add_multimap("kv_linear.bias", ["k_proj.bias", "v_proj.bias"], _concat_kv_weights)
-        .add_submodule(linear_mapper("output_linear", "out_proj"))
-        .add_submodule(rotary_embedding_mapper("rot_emb", "rot_emb"))
+        .add_submodule(attention_mapper("attention", "self_attn"))
+        .add_submodule(layer_norm_mapper("self_attn_layer_norm", "self_attn_layer_norm"))
+        .add_submodule(linear_mapper("fc1", "fc1"))
+        .add_submodule(linear_mapper("fc2", "fc2"))
+        .add_submodule(layer_norm_mapper("final_layer_norm", "final_layer_norm"))
     )
