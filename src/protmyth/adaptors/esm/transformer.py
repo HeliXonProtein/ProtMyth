@@ -6,12 +6,9 @@
 """Esm Transformers mapper
 """
 
-import torch
 from protmyth.adaptors.mapper import ModuleMapper
 from protmyth.adaptors.common import linear_mapper, layer_norm_mapper
 from protmyth.adaptors.esm.layers import attention_mapper
-from typing import Dict
-from jaxtyping import Float
 
 
 def transformer_mapper(tgt_pfx: str = "", src_pfx: str = "") -> ModuleMapper:

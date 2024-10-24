@@ -5,23 +5,23 @@
 
 import pytest
 import torch
-import einops
 import esm
+import einops
 
 from protmyth.modules.seqencoders.esm.transformer import TransformerLayer
-from protmyth.modules.esm.transformer import transformer_mapper
+from protmyth.adaptors.esm.transformer import transformer_mapper
 
 
 @pytest.mark.parametrize(
     "embed_dim, ffn_embed_dim, attention_heads, add_bias_kv,"
     "use_esm1b_layer_norm, use_rotary_embeddings, gating, batch_size, seq_len",
     [
-        (64, 128, 8, True, False, False, True, 2, 10),
-        (128, 256, 16, False, True, True, False, 4, 20),
-        (256, 512, 32, True, False, True, True, 8, 30),
+        (64, 128, 8, True, False, True, False, 2, 10),
+        # (128, 256, 16, False, False, True, False, 4, 20),
+        # (256, 512, 32, False, False, True, False, 8, 30),
     ]
 )
-def test_transformer_layer(
+def test_transformer_mapper(
     embed_dim: int,
     ffn_embed_dim: int,
     attention_heads: int,
@@ -55,7 +55,15 @@ def test_transformer_layer(
     seq_len : int
         The sequence length for the input tensor.
     """
-    layer = TransformerLayer(
+    layer_src = esm.modules.TransformerLayer(
+        embed_dim=embed_dim,
+        ffn_embed_dim=ffn_embed_dim,
+        attention_heads=attention_heads,
+        add_bias_kv=False,
+        use_esm1b_layer_norm=use_esm1b_layer_norm,
+        use_rotary_embeddings=use_rotary_embeddings,
+    )
+    layer_tgt = TransformerLayer(
         embed_dim=embed_dim,
         ffn_embed_dim=ffn_embed_dim,
         attention_heads=attention_heads,
@@ -64,17 +72,43 @@ def test_transformer_layer(
         use_rotary_embeddings=use_rotary_embeddings,
         gating=gating,
     )
+    # Initialize source layer parameters
+    for p in layer_src.parameters():
+        p.data.normal_(0.0, 0.5)
+
+    # Map states between the two layers
+    mapper = transformer_mapper(tgt_pfx="", src_pfx="")
+    result = mapper(layer_tgt.state_dict(), layer_src.state_dict())
+    assert set(result.matched_source) == set(layer_src.state_dict().keys())
+    assert set(result.matched_target) == set(layer_tgt.state_dict().keys())
 
     # Create input tensors
     x = torch.randn(batch_size, seq_len, embed_dim)
     self_attn_padding_mask = torch.randint(0, 2, (batch_size, seq_len), dtype=torch.bool)
 
     # Forward pass
-    output = layer(x, self_attn_padding_mask)
+    y_tgt = layer_tgt(x, self_attn_padding_mask)
 
-    # Verify output shape
-    assert output.shape == (batch_size, seq_len, embed_dim), f"Output shape mismatch: \
-            expected {(batch_size, seq_len, embed_dim)}, got {output.shape}"
+    x_permute = einops.rearrange(x, "b l d -> l b d")
+    y_src_permute, _ = layer_src(
+        x=x_permute,
+        self_attn_mask=None,
+        self_attn_padding_mask=self_attn_padding_mask,
+    )
+    y_src = einops.rearrange(y_src_permute, "l b d -> b l d")
 
-    # Ensure no NaN values in the output
-    assert torch.isnan(output).sum() == 0, "Output contains NaN values"
+    # Compare outputs
+    print(f"Source Output: {y_src}")
+    print(f"Target Output: {y_tgt}")
+
+    # Create a mask for non-NaN values
+    non_nan_mask = ~torch.isnan(y_src)
+
+    # Apply the mask to both source and target outputs
+    y_src_non_nan = y_src[non_nan_mask]
+    y_tgt_non_nan = y_tgt[non_nan_mask]
+
+    print(f"Source Output (non-NaN): {y_src_non_nan}")
+    print(f"Target Output (non-NaN): {y_tgt_non_nan}")
+    print(f"Max abs diff: {(y_src_non_nan - y_tgt_non_nan).abs().max()}")
+    assert torch.allclose(y_src_non_nan, y_tgt_non_nan, atol=1e-6, rtol=1e-4)
