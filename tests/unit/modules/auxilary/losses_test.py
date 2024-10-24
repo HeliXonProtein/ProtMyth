@@ -9,7 +9,8 @@
 import pytest
 import torch
 from jaxtyping import Float
-from protmyth.modules.auxilary.losses import RobertaLMHead, ContactPredictionHead  # Adjust the import path as necessary
+from protmyth.modules.auxilary.bert_head import RobertaLMHead
+from protmyth.modules.auxilary.contact_head import ContactPredictionHead
 
 
 @pytest.mark.parametrize(
